@@ -120,8 +120,32 @@ pre{padding:20px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-hei
 <div class="main">
 
   <div class="section">
+    <h2>The Preamble: Why Weights, Biases, and Calculus?</h2>
+    <p>Before computing gradients, let's take a step back. If we have inputs (x) and targets (y), why do we even need weights (W) and biases (b)? And why do we use calculus and the chain rule instead of just using probability or solving it exactly?</p>
+
+    <div class="concept">
+      <div class="concept-title">Why W and b? (The Knobs)</div>
+      <p>Think of a neural network as a giant, complex soundboard. The input <code>x</code> is the raw audio. <code>W</code> (Weights) are the volume sliders—they decide how much "attention" to pay to each input. <code>b</code> (Biases) are the baseline offsets. Together, they are the <strong>learnable knobs</strong> that allow a rigid mathematical equation to morph, bend, and fit the shape of your data.</p>
+    </div>
+
+    <p>So, we have a billion knobs. How do we tune them to get the right output? Historically, scientists tried several ways:</p>
+    <ul class="checklist">
+      <li><strong>Random Guessing (Brute Force):</strong> Try random knob combinations. This works for 2 knobs, but is mathematically impossible for 8 billion knobs (like Llama). The universe would end before you found a good combination.</li>
+      <li><strong>Analytical Math (Closed-form):</strong> For simple lines, you can use algebra to jump straight to the exact perfect answer. But add a non-linear "kink" (like a ReLU valve), and the exact math becomes impossible to solve backwards in one go.</li>
+      <li><strong>Evolution/Probability:</strong> Make random mutations, see what survives. Better, but very slow because it's essentially "blind" trial and error. It doesn't tell you <em>which</em> direction to move.</li>
+    </ul>
+
+    <div class="callout key">
+      <div class="callout-icon">🧭</div>
+      <div class="callout-text">
+        <strong>Calculus gives us a Compass.</strong> Unlike blind guessing, Calculus allows us to ask a highly specific question: <em>"If I turn this exact knob slightly to the right, does the error go up or down?"</em> Because neural networks are built of sequential layers, the <strong>Chain Rule</strong> is the only mathematical mechanism that lets us pass this "compass direction" backwards from the final output all the way to the very first input.
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
     <h2>The Big Picture: Why Do We Need Gradients?</h2>
-    <p>Training a neural network is an <strong>optimization problem</strong>: we want to find the values of our weights that minimize the loss (how wrong our predictions are). To do that, we need to know the answer to: <em>"If I change weight W by a tiny amount, how much does the loss change?"</em></p>
+    <p>Training a neural network is an <strong>optimization problem</strong>: we want to find the values of our weights that minimize the loss (how wrong our predictions are). To do that, we need to know the answer to the calculus question: <em>"If I change weight W by a tiny amount, how much does the loss change?"</em></p>
     <p>That rate of change is the <strong>gradient</strong>. Gradients point uphill (toward higher loss), so we move the weights <em>downhill</em> — this is <strong>gradient descent</strong>.</p>
 
     <div class="concept">
@@ -419,14 +443,29 @@ y_train <span class="op">=</span> model_weight <span class="op">@</span> x
   </div>
 
   <div class="section">
+    <h2>Knowledge Check: Try It Yourself</h2>
+    <p>If you've followed along, you should be able to answer these without looking back. Write code or map it out on a piece of paper.</p>
+
+    <div class="concept">
+      <div class="concept-title">Homework Challenges</div>
+      <ol style="margin-left:20px; color:#8aa898; font-size:13px; line-height:1.8;">
+        <li style="margin-bottom:12px;"><strong>The Dead Neuron:</strong> In a forward pass, a neuron computes <code>z = -5.0</code>. It then passes through a ReLU activation. During the backward pass, an upstream gradient of <code>10.0</code> arrives at this ReLU node. What is the gradient passed backwards through the ReLU? <em>(Hint: think about the valve)</em>.</li>
+        <li style="margin-bottom:12px;"><strong>The Matrix Cheat Code:</strong> You have a weight matrix <code>W</code> of shape <code>(64, 128)</code>. You don't know the forward math, but you need to write the backward pass in PyTorch. What will be the exact shape of the gradient tensor <code>d_W</code>?</li>
+        <li style="margin-bottom:12px;"><strong>The Accumulation Bug:</strong> You run a training loop for 5 steps, but your loss skyrockets to infinity. You look at your code and see: <br><code>loss.backward()</code><br><code>optimizer.step()</code><br>What single critical line of code is missing, and why did its absence cause the network to explode?</li>
+        <li><strong>Advanced Code Challenge:</strong> Take the <code>mlp_manual.py</code> script above. Change the activation from <code>torch.relu(z1)</code> to a custom activation <code>z1 * 2</code>. Derive and update the manual backward pass code for this new "times two" activation node.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="section">
     <h2>What You Now Know</h2>
     <ul class="checklist">
-      <li class="done">Gradients tell us how to change weights to reduce loss</li>
-      <li class="done">The chain rule lets us compute gradients through any composition of operations</li>
-      <li class="done">PyTorch builds a computation graph automatically and traverses it with .backward()</li>
-      <li class="done">Gradients accumulate — always zero them before each training step</li>
-      <li class="done">Use torch.no_grad() during inference to save memory</li>
-      <li>How does gradient flow through the attention mechanism? (Lesson 05)</li>
+      <li class="done"><strong>Why we optimize:</strong> Random guessing is impossible; calculus gives us a compass.</li>
+      <li class="done"><strong>Chain rule:</strong> Computes gradients through any composition of operations.</li>
+      <li class="done"><strong>Shape Matching:</strong> The ultimate cheat code for deriving matrix gradients.</li>
+      <li class="done"><strong>The Graph:</strong> PyTorch builds a computation graph automatically and traverses it with .backward()</li>
+      <li class="done"><strong>Accumulation trap:</strong> Always zero gradients before each training step.</li>
+      <li>How does gradient flow through the Attention mechanism? (Lesson 05)</li>
       <li>What happens to gradients in very deep networks? (Lesson 08 — residual connections)</li>
     </ul>
   </div>
