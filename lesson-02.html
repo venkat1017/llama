@@ -32,62 +32,66 @@ h1 em{font-style:italic;color:var(--accent)}
 .hero-desc{font-size:15px;line-height:1.8;color:#a0b8a8;max-width:640px;border-left:2px solid var(--accent);padding-left:20px}
 .main{max-width:860px;margin:0 auto;padding:0 32px 80px}
 .section{margin-bottom:56px}
-h2{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--text);margin-bottom:20px;display:flex;align-items:center;gap:12px}
+h2{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--text);margin-bottom:20px;display:flex;align-items:center;gap:12px; margin-top: 48px;}
 h2::after{content:'';flex:1;height:1px;background:var(--border)}
 h3{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:0.08em;text-transform:uppercase;margin:24px 0 10px}
 p{color:#a0b8a8;line-height:1.8;margin-bottom:14px}
 p strong{color:var(--text);font-weight:500}
-code{background:#0a1208;padding:2px 6px;color:var(--accent);font-size:12px}
-.code-block{background:#080f0a;border:1px solid var(--border);border-left:3px solid var(--accent);margin:20px 0;overflow:hidden}
+code{background:#0a1208;padding:2px 6px;color:var(--accent);font-size:12px;border-radius:3px;}
+.code-block{background:#080f0a;border:1px solid var(--border);border-left:3px solid var(--accent);margin:20px 0;overflow:hidden;border-radius:4px;}
 .code-header{background:#0d1610;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
 .code-title{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
-.code-label{font-size:10px;padding:2px 8px;background:var(--accent);color:#000;font-weight:700;letter-spacing:0.05em}
+.code-label{font-size:10px;padding:2px 8px;background:var(--accent);color:#000;font-weight:700;letter-spacing:0.05em;border-radius:2px;}
 pre{padding:20px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7}
 .kw{color:#7dd3fc}.fn{color:#86efac}.st{color:#fcd34d}.cm{color:#2a4035;font-style:italic}.nm{color:#3ddc84}.cl{color:#c084fc}.op{color:#94a3b8}
-.concept{background:var(--paper);border:1px solid var(--border);padding:20px 24px;margin:20px 0}
+.concept{background:var(--paper);border:1px solid var(--border);padding:20px 24px;margin:20px 0;border-radius:4px;}
 .concept-title{font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent2);margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .concept-title::before{content:'◆';font-size:8px}
 .concept p{margin:0;font-size:13px;color:#8aa898}
-.callout{display:flex;gap:16px;padding:16px 20px;margin:20px 0;border:1px solid}
+.callout{display:flex;gap:16px;padding:16px 20px;margin:20px 0;border:1px solid;border-radius:4px;}
 .callout.info{border-color:#0a3a5a;background:#030e15}
 .callout.warning{border-color:#3a2a00;background:#0f0900}
 .callout.key{border-color:#0a3a1a;background:#020a05}
+.callout.miracle{border-color:#3a0a2a;background:#15030e}
 .callout-icon{font-size:16px;flex-shrink:0;margin-top:1px}
-.callout-text{font-size:12px;line-height:1.7;color:#8aa898}
+.callout-text{font-size:13px;line-height:1.7;color:#8aa898}
 .callout-text strong{color:var(--text)}
 
-/* GRAPH VIZ */
-.graph-container{background:#080f0a;border:1px solid var(--border);padding:28px;margin:20px 0;overflow-x:auto}
-.graph-title{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:20px}
-.graph{display:flex;flex-direction:column;align-items:center;gap:0;font-family:var(--mono);font-size:12px}
-.graph-row{display:flex;align-items:center;justify-content:center;gap:8px;margin:0}
-.node{padding:8px 16px;border:1px solid;text-align:center;min-width:80px}
-.node.input{border-color:#1a3a5a;background:#030e15;color:#7dd3fc}
-.node.op{border-color:#2a3a1a;background:#080f05;color:#86efac}
-.node.loss{border-color:#3a1a1a;background:#0f0505;color:#ff8080}
-.node.grad{border-color:#3a3a00;background:#0f0f00;color:#fcd34d}
-.arrow{color:var(--muted);font-size:16px;display:flex;align-items:center;margin:0 4px}
-.arrow-down{color:var(--muted);font-size:14px;text-align:center;margin:4px 0;line-height:1}
-.grad-arrow{color:#fcd34d;font-size:14px;text-align:center;margin:4px 0;line-height:1}
-.fwd-label{font-size:10px;color:#2a6040;letter-spacing:0.08em;text-transform:uppercase;margin-right:8px}
-.bwd-label{font-size:10px;color:#604020;letter-spacing:0.08em;text-transform:uppercase;margin-right:8px}
-.graph-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:20px 0}
-
-.math-block{background:#060d08;border:1px solid #0a2018;padding:20px;margin:16px 0;font-size:13px;text-align:center;color:#c0d8c8}
+.math-block{background:#060d08;border:1px solid #0a2018;padding:20px;margin:16px 0;font-size:13px;text-align:center;color:#c0d8c8;border-radius:4px;}
 .math-block .eq{font-size:15px;margin-bottom:8px}
 .math-block .derivation{font-size:12px;color:var(--muted);margin-top:8px}
 
-.checklist{list-style:none;margin:16px 0}
+.checklist{list-style:none;margin:16px 0; background: #080f0a; padding: 20px; border: 1px solid var(--border); border-radius: 4px;}
 .checklist li{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #0a1810;font-size:13px;color:#8aa898}
-.checklist li:last-child{border-bottom:none}
+.checklist li:last-child{border-bottom:none; padding-bottom: 0;}
 .checklist li::before{content:'○';color:var(--muted);flex-shrink:0}
 .checklist li.done::before{content:'●';color:var(--accent)}
-.next-lesson{background:var(--paper);border:1px solid var(--border);padding:28px;display:flex;align-items:center;justify-content:space-between;margin-top:64px;text-decoration:none}
+.next-lesson{background:var(--paper);border:1px solid var(--border);padding:28px;display:flex;align-items:center;justify-content:space-between;margin-top:64px;text-decoration:none;border-radius:4px;}
 .next-lesson:hover{border-color:var(--accent)}
 .next-label{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
 .next-title{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--text)}
 .next-arrow{font-size:24px;color:var(--accent)}
-.step-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:var(--accent);color:#000;font-size:11px;font-weight:700;flex-shrink:0;margin-right:8px}
+
+/* SVG Animation Styles */
+.svg-container { width: 100%; background: #080f0a; border: 1px solid var(--border); border-radius: 4px; padding: 20px; margin: 20px 0; text-align: center; }
+.node-box { fill: #131816; stroke: #1e2822; stroke-width: 2; rx: 6; }
+.node-text { fill: #dce8e0; font-family: var(--mono); font-size: 14px; text-anchor: middle; dominant-baseline: middle; }
+.edge-fwd { stroke: var(--accent); stroke-width: 2; fill: none; stroke-dasharray: 4; animation: dash 20s linear infinite; opacity: 0.5; }
+.edge-bwd { stroke: #fcd34d; stroke-width: 2; fill: none; stroke-dasharray: 4; animation: dash-rev 20s linear infinite; opacity: 0.5; }
+.dot-fwd { fill: var(--accent); filter: drop-shadow(0 0 4px var(--accent)); }
+.dot-bwd { fill: #fcd34d; filter: drop-shadow(0 0 4px #fcd34d); }
+
+@keyframes dash { to { stroke-dashoffset: -100; } }
+@keyframes dash-rev { to { stroke-dashoffset: 100; } }
+@keyframes moveFwd1 { 0%, 20% { offset-distance: 0%; opacity: 0;} 25% { opacity: 1; } 45% { offset-distance: 100%; opacity: 1; } 50%, 100% { opacity: 0; } }
+@keyframes moveFwd2 { 0%, 40% { offset-distance: 0%; opacity: 0;} 45% { opacity: 1; } 65% { offset-distance: 100%; opacity: 1; } 70%, 100% { opacity: 0; } }
+@keyframes moveBwd1 { 0%, 70% { offset-distance: 100%; opacity: 0;} 75% { opacity: 1; } 95% { offset-distance: 0%; opacity: 1; } 100% { opacity: 0; } }
+
+.path-fwd-1 { offset-path: path('M 120 70 L 250 100'); }
+.path-fwd-2 { offset-path: path('M 350 100 L 480 100'); }
+.anim-fwd-1 { animation: moveFwd1 4s infinite ease-in-out; }
+.anim-fwd-2 { animation: moveFwd2 4s infinite ease-in-out; }
+.anim-bwd-1 { animation: moveBwd1 4s infinite ease-in-out; }
 </style>
 </head>
 <body>
@@ -97,9 +101,7 @@ pre{padding:20px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-hei
   <div class="nav-lessons">
     <a href="lesson-01.html" class="done">01</a>
     <a href="lesson-02.html" class="active">02</a>
-    <a href="lesson-03.html">03</a><a href="lesson-04.html">04</a><a href="lesson-05.html">05</a>
-    <a href="#">06</a><a href="#">07</a><a href="#">08</a><a href="#">09</a><a href="#">10</a>
-    <a href="#">11</a><a href="#">12</a><a href="#">13</a><a href="#">14</a><a href="#">15</a>
+    <a href="lesson-03.html">03</a><a href="lesson-04.html">04</a>
   </div>
   <div class="nav-right">CPU · Pure PyTorch</div>
 </nav>
@@ -113,84 +115,130 @@ pre{padding:20px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-hei
     <span>💻 CPU only</span>
   </div>
   <p class="hero-desc">
-    How does PyTorch "know" how to update weights? This lesson tears open the black box — we implement backprop by hand, derive the chain rule, and then watch PyTorch do it all automatically. <strong>This is the engine that trains every neural network.</strong>
+    How does PyTorch "know" how to update weights? This lesson tears open the black box. We will learn why gradient descent works, build backprop by hand, and see why Deep Learning is even mathematically possible. <strong>This is the engine that trains every neural network on Earth.</strong>
   </p>
 </div>
 
 <div class="main">
 
   <div class="section">
-    <h2>The Preamble: Why Weights, Biases, and Calculus?</h2>
-    <p>Before computing gradients, let's take a step back. If we have inputs (x) and targets (y), why do we even need weights (W) and biases (b)? And why do we use calculus and the chain rule instead of just using probability or solving it exactly?</p>
+    <h2>The Preamble: Why Weights and Calculus?</h2>
+    <p>Before computing gradients, let's take a step back. If we have inputs (text) and targets (next word), what exactly are we learning? What do weights actually represent?</p>
 
     <div class="concept">
-      <div class="concept-title">Why W and b? (The Knobs)</div>
-      <p>Think of a neural network as a giant, complex soundboard. The input <code>x</code> is the raw audio. <code>W</code> (Weights) are the volume sliders—they decide how much "attention" to pay to each input. <code>b</code> (Biases) are the baseline offsets. Together, they are the <strong>learnable knobs</strong> that allow a rigid mathematical equation to morph, bend, and fit the shape of your data.</p>
+      <div class="concept-title">What Weights Actually Represent</div>
+      <p>Weights are <strong>statistical relationships</strong>. When a model reads "Paris is the capital of", the internal weights are literally structural numbers that say "If you see Paris, strongly boost the probability of France." <code>W</code> (Weights) are the volume sliders, and <code>b</code> (Biases) are the baseline offsets. Together, they are billions of learnable knobs.</p>
     </div>
 
-    <p>So, we have a billion knobs. How do we tune them to get the right output? Historically, scientists tried several ways:</p>
-    <ul class="checklist">
-      <li><strong>Random Guessing (Brute Force):</strong> Try random knob combinations. This works for 2 knobs, but is mathematically impossible for 8 billion knobs (like Llama). The universe would end before you found a good combination.</li>
-      <li><strong>Analytical Math (Closed-form):</strong> For simple lines, you can use algebra to jump straight to the exact perfect answer. But add a non-linear "kink" (like a ReLU valve), and the exact math becomes impossible to solve backwards in one go.</li>
-      <li><strong>Evolution/Probability:</strong> Make random mutations, see what survives. Better, but very slow because it's essentially "blind" trial and error. It doesn't tell you <em>which</em> direction to move.</li>
+    <p>So, we have billions of knobs. How do we tune them to get the right output? Historically, scientists tried several ways:</p>
+    <ul class="checklist" style="background:transparent; border:none; padding:0;">
+      <li><strong>Random Guessing (Brute Force):</strong> Mathematically impossible. The universe would end before you found a good combination for 8 billion parameters.</li>
+      <li><strong>Evolution/Probability:</strong> Make random mutations, see what survives. Better, but very slow because it's "blind" trial and error.</li>
+      <li><strong>Calculus (Gradient Descent):</strong> Calculus gives us a <em>compass</em>. It allows us to ask a highly specific question: <em>"If I turn this exact knob slightly to the right, does the error go up or down?"</em></li>
     </ul>
 
     <div class="callout key">
-      <div class="callout-icon">🧭</div>
+      <div class="callout-icon">🏔️</div>
       <div class="callout-text">
-        <strong>Calculus gives us a Compass.</strong> Unlike blind guessing, Calculus allows us to ask a highly specific question: <em>"If I turn this exact knob slightly to the right, does the error go up or down?"</em> Because neural networks are built of sequential layers, the <strong>Chain Rule</strong> is the only mathematical mechanism that lets us pass this "compass direction" backwards from the final output all the way to the very first input.
+        <strong>Why does gradient descent actually work?</strong><br>
+        Think of the loss function as a foggy mountain landscape. The "Gradient" is simply the direction of the <em>steepest uphill incline</em> from where you are standing. If you want to reach the bottom of the valley (minimum loss), you just step in the exact <strong>opposite</strong> direction of the gradient. You do this thousands of times. That is gradient descent.
       </div>
     </div>
   </div>
 
   <div class="section">
-    <h2>The Big Picture: Why Do We Need Gradients?</h2>
-    <p>Training a neural network is an <strong>optimization problem</strong>: we want to find the values of our weights that minimize the loss (how wrong our predictions are). To do that, we need to know the answer to the calculus question: <em>"If I change weight W by a tiny amount, how much does the loss change?"</em></p>
-    <p>That rate of change is the <strong>gradient</strong>. Gradients point uphill (toward higher loss), so we move the weights <em>downhill</em> — this is <strong>gradient descent</strong>.</p>
+    <h2>The 5-Step Training Loop</h2>
+    <p>If you break down the training of a neural network—whether it's a 2-parameter line or a 400-Billion parameter Llama 3 model—it always follows this exact 5-step loop:</p>
+
+    <div class="code-block" style="border-left-color: var(--accent2)">
+      <div class="code-header">
+        <div class="code-title">The Universal Deep Learning Loop</div>
+      </div>
+<pre>
+<span class="cm"># 1. FORWARD PASS: Pass data through the network</span>
+predictions = model(inputs)
+
+<span class="cm"># 2. COMPUTE LOSS: How wrong were the predictions?</span>
+loss = loss_function(predictions, targets)
+
+<span class="cm"># 3. BACKWARD PASS (Backprop): Calculate gradients for every weight</span>
+loss.backward()
+
+<span class="cm"># 4. UPDATE WEIGHTS: Step downhill (opposite of gradient)</span>
+optimizer.step()
+
+<span class="cm"># 5. REPEAT: Do this millions of times over the dataset</span></pre>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>The Miracle of Backprop: Why Not Brute Force?</h2>
+    <p>A very common beginner question: <em>Why do we need complex calculus (Backprop)? Why can't we just tweak a weight by `0.001`, run the network, and see if the loss goes down?</em></p>
+    <p>That is called a <strong>Numerical Gradient</strong>. Here is why it is impossible for Deep Learning:</p>
+
+    <div class="math-block">
+      <div class="eq">Numerical Gradient = ( Loss(W + 0.001) - Loss(W) ) / 0.001</div>
+      <div class="derivation">To calculate this, you must run a full Forward Pass for EVERY SINGLE parameter.</div>
+    </div>
+
+    <div class="callout miracle">
+      <div class="callout-icon">✨</div>
+      <div class="callout-text">
+        <strong>The $O(N)$ vs $O(1)$ Miracle</strong><br>
+        If you have a model like GPT-3 with <strong>175 Billion parameters</strong>, calculating numerical gradients would require 175 Billion forward passes <em>for a single training step</em>. <br><br>
+        <strong>Backpropagation (Analytical Gradients) computes the exact same thing using only 1 Forward pass and 1 Backward pass.</strong> Backprop is literally 175 billion times faster. Without it, Deep Learning simply would not exist.
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>What Exactly is Flowing Backward?</h2>
+    <p>We say "gradients flow backward." But what does that physically mean? Think of every math operation in the network (a multiply, an add, a ReLU) as a <strong>Local Router Node</strong>.</p>
+    <p>During the <strong>Forward Pass</strong>, nodes receive Values, compute a result, and pass Values forward. During the <strong>Backward Pass</strong>, nodes receive Gradients from the right, multiply them by their local derivative (Chain Rule), and pass Gradients backward.</p>
+
+    <div class="svg-container">
+      <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:16px;">Animation: Values Forward (Green) / Gradients Backward (Gold)</div>
+      <svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+        <!-- Lines -->
+        <path d="M 120 70 L 250 100" class="edge-fwd" />
+        <path d="M 120 130 L 250 100" class="edge-fwd" />
+        <path d="M 350 100 L 480 100" class="edge-fwd" />
+        
+        <!-- Backward Lines (Offset slightly for visual clarity) -->
+        <path d="M 480 105 L 350 105" class="edge-bwd" />
+        <path d="M 250 105 L 120 75" class="edge-bwd" />
+        <path d="M 250 105 L 120 135" class="edge-bwd" />
+
+        <!-- Nodes -->
+        <rect x="20" y="50" width="100" height="40" class="node-box" />
+        <text x="70" y="70" class="node-text">x = 3.0</text>
+        
+        <rect x="20" y="110" width="100" height="40" class="node-box" />
+        <text x="70" y="130" class="node-text">w = 2.0</text>
+        
+        <rect x="250" y="80" width="100" height="40" class="node-box" />
+        <text x="300" y="100" class="node-text">Multiply (u)</text>
+
+        <rect x="480" y="80" width="100" height="40" class="node-box" stroke="#ff8080" />
+        <text x="530" y="100" class="node-text" fill="#ff8080">Loss</text>
+
+        <!-- Animated Dots -->
+        <circle r="6" class="dot-fwd path-fwd-1 anim-fwd-1" />
+        <circle r="6" class="dot-fwd path-fwd-2 anim-fwd-2" />
+        <circle r="6" class="dot-bwd path-fwd-2 anim-bwd-1" style="animation-direction: reverse;" />
+        <circle r="6" class="dot-bwd path-fwd-1 anim-bwd-1" style="animation-direction: reverse; animation-delay: 1s;" />
+      </svg>
+    </div>
 
     <div class="concept">
       <div class="concept-title">The Chain Rule — in one sentence</div>
-      <p>If loss depends on y, and y depends on x, then <em>how much does loss change when x changes?</em> Answer: (∂loss/∂y) × (∂y/∂x). The chain rule lets us decompose complex gradients into simple multiplications — and that's exactly what backprop does.</p>
+      <p>If loss depends on y, and y depends on x, then <em>how much does loss change when x changes?</em> Answer: (∂loss/∂y) × (∂y/∂x). Backprop is just the Chain Rule applied iteratively through a graph.</p>
     </div>
   </div>
 
   <div class="section">
     <h2>Implement Backprop by Hand</h2>
-    <p>We'll build the simplest possible neural network: one linear layer + MSE loss. We'll compute gradients <strong>manually</strong> first, then verify with PyTorch's autograd. This is the same thing Karpathy does in micrograd.</p>
-
-    <div class="graph-container">
-      <div class="graph-title">Computation graph — forward & backward pass</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start">
-        <div>
-          <div style="font-size:10px;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:12px">Forward Pass →</div>
-          <div class="graph">
-            <div class="graph-row"><div class="node input">x = 3.0</div><div class="arrow">×</div><div class="node input">w = 2.0</div></div>
-            <div class="arrow-down">↓</div>
-            <div class="node op">u = w·x = 6.0</div>
-            <div class="arrow-down">↓ + b=1.0</div>
-            <div class="node op">y_pred = u+b = 7.0</div>
-            <div class="arrow-down">↓ vs y_true=5.0</div>
-            <div class="node loss">loss = (7-5)² = 4.0</div>
-          </div>
-        </div>
-        <div>
-          <div style="font-size:10px;color:#fcd34d;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:12px">Backward Pass ← (chain rule)</div>
-          <div class="graph">
-            <div class="node grad">∂loss/∂loss = 1.0</div>
-            <div class="grad-arrow">↑ ×2(y_pred-y_true) = ×4</div>
-            <div class="node grad">∂loss/∂y_pred = 4.0</div>
-            <div class="grad-arrow">↑ ×1 (∂y_pred/∂u=1)</div>
-            <div class="node grad">∂loss/∂u = 4.0</div>
-            <div class="grad-arrow">↑ ×x=3 | ×w=2</div>
-            <div class="graph-row">
-              <div class="node grad" style="font-size:11px">∂loss/∂w=12</div>
-              <div style="width:16px"></div>
-              <div class="node grad" style="font-size:11px">∂loss/∂b=4</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <p>Let's build the simplest possible neural network: one linear layer + MSE loss. We'll compute gradients <strong>manually</strong> first, then verify with PyTorch. This is the same pedagogical approach Andrej Karpathy uses in <code>micrograd</code>.</p>
 
     <div class="code-block">
       <div class="code-header">
@@ -199,125 +247,95 @@ pre{padding:20px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-hei
       </div>
 <pre><span class="kw">import</span> torch
 
-<span class="cm"># ── Our tiny model: y = w*x + b ───────────────────────────────
-# We'll compute ALL gradients ourselves, step by step.</span>
-
-x      <span class="op">=</span> <span class="nm">3.0</span>   <span class="cm"># input (fixed, not learned)</span>
+<span class="cm"># ── Our tiny model: y = w*x + b ───────────────────────────────</span>
+x      <span class="op">=</span> <span class="nm">3.0</span>   <span class="cm"># input (fixed)</span>
 w      <span class="op">=</span> <span class="nm">2.0</span>   <span class="cm"># learnable weight</span>
 b      <span class="op">=</span> <span class="nm">1.0</span>   <span class="cm"># learnable bias</span>
 y_true <span class="op">=</span> <span class="nm">5.0</span>   <span class="cm"># target</span>
 
-<span class="cm"># ── FORWARD PASS ─────────────────────────────────────────────</span>
+<span class="cm"># ── FORWARD PASS (Values move right) ─────────────────────────</span>
 u      <span class="op">=</span> w <span class="op">*</span> x           <span class="cm"># u = 6.0</span>
 y_pred <span class="op">=</span> u <span class="op">+</span> b           <span class="cm"># y_pred = 7.0</span>
 loss   <span class="op">=</span> (y_pred <span class="op">-</span> y_true) <span class="op">**</span> <span class="nm">2</span>  <span class="cm"># loss = 4.0</span>
-<span class="fn">print</span>(<span class="st">f"Forward: u={u}, y_pred={y_pred}, loss={loss}"</span>)
 
-<span class="cm"># ── BACKWARD PASS (chain rule by hand) ───────────────────────
-# We go backwards through each operation.</span>
+<span class="cm"># ── BACKWARD PASS (Gradients move left via Chain Rule) ───────</span>
 
-<span class="cm"># Step 1: gradient of loss w.r.t. loss = 1 (trivially)</span>
+<span class="cm"># Step 1: Base case (dL/dL = 1)</span>
 d_loss__d_loss <span class="op">=</span> <span class="nm">1.0</span>
 
-<span class="cm"># Step 2: loss = (y_pred - y_true)²
-# d(loss)/d(y_pred) = 2*(y_pred - y_true)</span>
-d_loss__d_ypred <span class="op">=</span> <span class="nm">2</span> <span class="op">*</span> (y_pred <span class="op">-</span> y_true)   <span class="cm"># = 2*(7-5) = 4.0</span>
+<span class="cm"># Step 2: loss = (y_pred - y_true)² -> derivative is 2*(y_pred - y_true)</span>
+d_loss__d_ypred <span class="op">=</span> <span class="nm">2</span> <span class="op">*</span> (y_pred <span class="op">-</span> y_true)   <span class="cm"># 2*(7-5) = 4.0</span>
 
-<span class="cm"># Step 3: y_pred = u + b
-# d(y_pred)/d(u) = 1  → so d_loss/d_u = d_loss/d_ypred * 1</span>
-d_loss__d_u <span class="op">=</span> d_loss__d_ypred <span class="op">*</span> <span class="nm">1.0</span>          <span class="cm"># = 4.0</span>
+<span class="cm"># Step 3: y_pred = u + b -> derivative of + is 1. Gradient routes perfectly to both.</span>
+d_loss__d_u <span class="op">=</span> d_loss__d_ypred <span class="op">*</span> <span class="nm">1.0</span>       <span class="cm"># = 4.0</span>
+d_loss__d_b <span class="op">=</span> d_loss__d_ypred <span class="op">*</span> <span class="nm">1.0</span>       <span class="cm"># = 4.0</span>
 
-<span class="cm"># d(y_pred)/d(b) = 1  → so d_loss/d_b = d_loss/d_ypred * 1</span>
-d_loss__d_b <span class="op">=</span> d_loss__d_ypred <span class="op">*</span> <span class="nm">1.0</span>          <span class="cm"># = 4.0</span>
-
-<span class="cm"># Step 4: u = w * x
-# d(u)/d(w) = x   → so d_loss/d_w = d_loss/d_u * x</span>
-d_loss__d_w <span class="op">=</span> d_loss__d_u <span class="op">*</span> x               <span class="cm"># = 4.0 * 3.0 = 12.0</span>
+<span class="cm"># Step 4: u = w * x -> derivative w.r.t w is x.</span>
+d_loss__d_w <span class="op">=</span> d_loss__d_u <span class="op">*</span> x             <span class="cm"># = 4.0 * 3.0 = 12.0</span>
 
 <span class="fn">print</span>(<span class="st">f"∂loss/∂w = {d_loss__d_w}"</span>)   <span class="cm"># 12.0</span>
 <span class="fn">print</span>(<span class="st">f"∂loss/∂b = {d_loss__d_b}"</span>)   <span class="cm"># 4.0</span>
 
-<span class="cm"># ── VERIFY: PyTorch computes the same thing automatically ─────</span>
+<span class="cm"># ── VERIFY: PyTorch Autograd ──────────────────────────────────</span>
 w_t <span class="op">=</span> torch.<span class="fn">tensor</span>([<span class="nm">2.0</span>], requires_grad<span class="op">=</span><span class="kw">True</span>)
 b_t <span class="op">=</span> torch.<span class="fn">tensor</span>([<span class="nm">1.0</span>], requires_grad<span class="op">=</span><span class="kw">True</span>)
-x_t <span class="op">=</span> torch.<span class="fn">tensor</span>([<span class="nm">3.0</span>])  <span class="cm"># no grad needed for input</span>
+x_t <span class="op">=</span> torch.<span class="fn">tensor</span>([<span class="nm">3.0</span>])
 
-y_pred_t <span class="op">=</span> w_t <span class="op">*</span> x_t <span class="op">+</span> b_t
-loss_t   <span class="op">=</span> (y_pred_t <span class="op">-</span> <span class="nm">5.0</span>) <span class="op">**</span> <span class="nm">2</span>
+loss_t <span class="op">=</span> (w_t <span class="op">*</span> x_t <span class="op">+</span> b_t <span class="op">-</span> <span class="nm">5.0</span>) <span class="op">**</span> <span class="nm">2</span>
 loss_t.<span class="fn">backward</span>()
 
 <span class="fn">print</span>(<span class="st">f"PyTorch ∂loss/∂w = {w_t.grad.item()}"</span>)  <span class="cm"># 12.0 ✓</span>
 <span class="fn">print</span>(<span class="st">f"PyTorch ∂loss/∂b = {b_t.grad.item()}"</span>)  <span class="cm"># 4.0  ✓</span></pre>
     </div>
-
-    <div class="callout key">
-      <div class="callout-icon">✓</div>
-      <div class="callout-text"><strong>Identical results.</strong> Our manual calculation and PyTorch's autograd produce exactly the same gradients. PyTorch just does this automatically for every operation in your network — no matter how deep or complex. That's the power of the computation graph.</div>
-    </div>
   </div>
 
   <div class="section">
-    <h2>The Computation Graph in Depth</h2>
-    <p>When you write <code>y = w * x + b</code> with <code>requires_grad=True</code>, PyTorch secretly builds a graph of <strong>Function nodes</strong> — one for each operation. Each node knows how to compute its <em>local gradient</em> (the derivative of its output w.r.t. its inputs).</p>
-    <p>When you call <code>loss.backward()</code>, PyTorch traverses this graph in reverse order (from loss back to weights), multiplying local gradients together — that's the chain rule in action.</p>
+    <h2>What does <code>.backward()</code> actually do internally?</h2>
+    <p>PyTorch isn't magic. Under the hood, <code>.backward()</code> does exactly three things:</p>
+    <ol style="margin-left: 20px; color: #8aa898; margin-bottom: 20px;">
+      <li>It performs a <strong>Topological Sort</strong> on the computation graph (arranges all nodes from output back to input).</li>
+      <li>It sets the gradient of the final node (loss) to <code>1.0</code>.</li>
+      <li>It loops through the sorted list in reverse, calling a local <code>_backward()</code> function on each node.</li>
+    </ol>
 
     <div class="code-block">
       <div class="code-header">
-        <div class="code-title">inspect_graph.py — peek inside autograd</div>
+        <div class="code-title">micro_engine.py — Demystifying the engine</div>
         <div class="code-label">INTERNALS</div>
       </div>
-<pre><span class="kw">import</span> torch
+<pre><span class="cm"># If you wrote your own PyTorch, a Tensor object would look like this:</span>
+<span class="kw">class</span> <span class="fn">Value</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, data, _children=()):
+        <span class="kw">self</span>.data <span class="op">=</span> data
+        <span class="kw">self</span>.grad <span class="op">=</span> <span class="nm">0.0</span>
+        <span class="kw">self</span>._backward <span class="op">=</span> <span class="kw">lambda</span>: <span class="kw">None</span>
+        <span class="kw">self</span>._prev <span class="op">=</span> <span class="fn">set</span>(_children)
 
-w <span class="op">=</span> torch.<span class="fn">tensor</span>([<span class="nm">2.0</span>], requires_grad<span class="op">=</span><span class="kw">True</span>)
-x <span class="op">=</span> torch.<span class="fn">tensor</span>([<span class="nm">3.0</span>])
-b <span class="op">=</span> torch.<span class="fn">tensor</span>([<span class="nm">1.0</span>], requires_grad<span class="op">=</span><span class="kw">True</span>)
-
-y <span class="op">=</span> w <span class="op">*</span> x <span class="op">+</span> b
-loss <span class="op">=</span> (y <span class="op">-</span> <span class="nm">5.0</span>) <span class="op">**</span> <span class="nm">2</span>
-
-<span class="cm"># PyTorch attaches a .grad_fn to every tensor created from learnable params</span>
-<span class="fn">print</span>(loss.grad_fn)        <span class="cm"># PowBackward0</span>
-<span class="fn">print</span>(y.grad_fn)           <span class="cm"># AddBackward0</span>
-<span class="fn">print</span>((w<span class="op">*</span>x).grad_fn)      <span class="cm"># MulBackward0</span>
-
-<span class="cm"># Each grad_fn links to its inputs — that's the graph</span>
-<span class="fn">print</span>(loss.grad_fn.next_functions)
-<span class="cm"># → ((SubBackward0,...), (None,...))
-# It knows: to get grad of loss, first go through Sub, then Pow</span>
-
-<span class="cm"># ── The gradient accumulation trap ───────────────────────────
-# IMPORTANT: .backward() ACCUMULATES gradients by default!
-# If you call it twice without zeroing, grads stack up.</span>
-
-w.grad <span class="op">=</span> <span class="kw">None</span>  <span class="cm"># reset</span>
-loss.<span class="fn">backward</span>()
-<span class="fn">print</span>(w.grad)   <span class="cm"># tensor([12.])</span>
-
-<span class="cm"># Oops: backward again WITHOUT zeroing</span>
-loss2 <span class="op">=</span> (w <span class="op">*</span> x <span class="op">+</span> b <span class="op">-</span> <span class="nm">5.0</span>) <span class="op">**</span> <span class="nm">2</span>
-loss2.<span class="fn">backward</span>()
-<span class="fn">print</span>(w.grad)   <span class="cm"># tensor([24.]) ← WRONG! doubled because of accumulation</span>
-
-<span class="cm"># Fix: always zero gradients before each backward pass!
-# In the training loop you'll do:  optimizer.zero_grad()</span></pre>
+    <span class="kw">def</span> <span class="fn">__mul__</span>(<span class="kw">self</span>, other):
+        out <span class="op">=</span> <span class="fn">Value</span>(<span class="kw">self</span>.data <span class="op">*</span> other.data, (self, other))
+        
+        <span class="kw">def</span> <span class="fn">_backward</span>():
+            <span class="cm"># The Local Gradient Router! (Chain rule)</span>
+            <span class="kw">self</span>.grad <span class="op">+=</span> other.data <span class="op">*</span> out.grad
+            other.grad <span class="op">+=</span> <span class="kw">self</span>.data <span class="op">*</span> out.grad
+            
+        out._backward <span class="op">=</span> _backward
+        <span class="kw">return</span> out</pre>
     </div>
 
     <div class="callout warning">
-      <div class="callout-icon">⚠️</div>
-      <div class="callout-text"><strong>The #1 training bug: forgetting to zero gradients.</strong> Always call <code>optimizer.zero_grad()</code> (or <code>model.zero_grad()</code>) at the start of each training step. If you don't, gradients from previous batches accumulate and your model trains on garbage.</div>
+      <div class="callout-icon">🧠</div>
+      <div class="callout-text">
+        <strong>Why does PyTorch use so much GPU memory during training?</strong><br>
+        Look at the <code>_backward()</code> function above. To compute the gradient, the multiplier needs to "remember" the forward data (<code>self.data</code> and <code>other.data</code>). Therefore, <strong>Autograd must cache all intermediate forward tensors in memory</strong> so they are ready for the backward pass. This is why training takes 3x-4x more memory than inference!
+      </div>
     </div>
   </div>
 
   <div class="section">
     <h2>A Real Mini-Network: The Matrix Dimension Trick</h2>
-    <p>Going from scalars (single numbers) to matrices (grids of numbers) is where 90% of people get stuck. But here is the secret "cheat code" used by neural network engineers: <strong>The shape of a gradient must exactly match the shape of its original tensor.</strong></p>
-    
-    <div class="concept">
-      <div class="concept-title">The Local Node Mental Model</div>
-      <p>Don't look at the whole network at once. Think of every operation (like a matrix multiply or a ReLU) as an isolated "Node" sitting in the graph. During the backward pass, a Node receives a gradient from above (<code>d_out</code>). Its only job is to calculate: <em>"How do I route this gradient to my inputs?"</em></p>
-    </div>
-
-    <p>Let's look at a 2-layer network with a ReLU activation. This is the exact mathematical structure inside every Transformer feed-forward block.</p>
+    <p>Going from scalars to vectors of millions of dimensions is where 90% of people get stuck. What is a gradient in a million dimensions? <strong>It's just a million-dimensional vector pointing downhill.</strong></p>
+    <p>When working with Matrices, here is the secret "cheat code" used by neural network engineers: <strong>The shape of a gradient matrix must exactly match the shape of its original weight matrix.</strong></p>
 
     <div class="math-block">
       <div class="eq">Forward: h = ReLU(W₁·x + b₁),  y = W₂·h + b₂</div>
@@ -330,115 +348,76 @@ loss2.<span class="fn">backward</span>()
         <strong>Answer:</strong> The Outer Product! <code>d_y @ h.T</code></span>
         <br><br>
         <strong>2. The ReLU Valve (h = ReLU(z)):</strong> How do we find <code>d_z</code>?<br>
-        <span style="color:var(--muted); font-size:12px;">ReLU is a literal physical valve. If the forward pass <code>z</code> was > 0, the valve is OPEN (derivative is 1, gradient flows perfectly). If <code>z</code> was ≤ 0, the valve is CLOSED (derivative is 0, gradient is permanently destroyed).</span>
+        <span style="color:var(--muted); font-size:12px;">ReLU is a literal physical valve. If the forward pass <code>z</code> was > 0, the valve is OPEN (derivative is 1, gradient passes). If <code>z</code> was ≤ 0, the valve is CLOSED (derivative is 0, gradient is permanently destroyed).</span>
       </div>
     </div>
 
     <div class="code-block">
       <div class="code-header">
-        <div class="code-title">mlp_manual.py — 2-layer net, manual backprop</div>
+        <div class="code-title">mlp_manual.py — matrix backprop</div>
         <div class="code-label">DEEP DIVE</div>
       </div>
 <pre><span class="kw">import</span> torch
 
-torch.manual_seed(<span class="nm">42</span>)
-
 <span class="cm"># ── Network hyperparameters ───────────────────────────────────</span>
 d_in, d_hidden, d_out <span class="op">=</span> <span class="nm">4</span>, <span class="nm">8</span>, <span class="nm">2</span>
 
-W1 <span class="op">=</span> torch.<span class="fn">randn</span>(d_hidden, d_in)  <span class="op">*</span> <span class="nm">0.1</span>
-b1 <span class="op">=</span> torch.<span class="fn">zeros</span>(d_hidden)
-W2 <span class="op">=</span> torch.<span class="fn">randn</span>(d_out, d_hidden) <span class="op">*</span> <span class="nm">0.1</span>
-b2 <span class="op">=</span> torch.<span class="fn">zeros</span>(d_out)
+W1 <span class="op">=</span> torch.<span class="fn">randn</span>(d_hidden, d_in)
+W2 <span class="op">=</span> torch.<span class="fn">randn</span>(d_out, d_hidden)
+x  <span class="op">=</span> torch.<span class="fn">randn</span>(d_in)         
+d_z2 <span class="op">=</span> torch.<span class="fn">randn</span>(d_out) <span class="cm"># Fake upstream gradient from loss</span>
 
-x      <span class="op">=</span> torch.<span class="fn">randn</span>(d_in)         
-target <span class="op">=</span> torch.<span class="fn">tensor</span>([<span class="nm">1.0</span>, <span class="nm">0.0</span>])
+<span class="cm"># Forward</span>
+z1 <span class="op">=</span> W1 <span class="op">@</span> x
+h  <span class="op">=</span> torch.<span class="fn">relu</span>(z1)
 
-<span class="cm"># ── FORWARD PASS ─────────────────────────────────────────────</span>
-z1 <span class="op">=</span> W1 <span class="op">@</span> x <span class="op">+</span> b1              <span class="cm"># Shape: (8,)</span>
-h  <span class="op">=</span> torch.<span class="fn">relu</span>(z1)            <span class="cm"># Shape: (8,)</span>
-z2 <span class="op">=</span> W2 <span class="op">@</span> h <span class="op">+</span> b2              <span class="cm"># Shape: (2,)</span>
-loss <span class="op">=</span> ((z2 <span class="op">-</span> target) <span class="op">**</span> <span class="nm">2</span>).<span class="fn">mean</span>()
+<span class="cm"># Backward Matrix Math (Shape Matching!)</span>
+d_W2 <span class="op">=</span> torch.<span class="fn">outer</span>(d_z2, h)       <span class="cm"># (2,) ⊗ (8,) = (2, 8) matches W2!</span>
+d_h  <span class="op">=</span> W2.T <span class="op">@</span> d_z2                <span class="cm"># (8, 2) @ (2,) = (8,) matches h!</span>
 
-<span class="cm"># ── BACKWARD PASS ────────────────────────────────────────────</span>
-<span class="cm"># 1. Gradient of MSE Loss: d_loss/d_z2</span>
-d_z2 <span class="op">=</span> <span class="nm">2.0</span> <span class="op">*</span> (z2 <span class="op">-</span> target) <span class="op">/</span> d_out  <span class="cm"># Shape: (2,)</span>
-
-<span class="cm"># 2. Backprop through Layer 2 (y = W2 @ h + b2)</span>
-<span class="cm"># SHAPE MATCHING: d_W2 must be (2, 8). </span>
-<span class="cm"># d_z2 is (2,), h is (8,). Outer product gives us (2, 8)!</span>
-d_W2 <span class="op">=</span> torch.<span class="fn">outer</span>(d_z2, h)       
-d_b2 <span class="op">=</span> d_z2.clone()               
-
-<span class="cm"># To continue backward, we need the gradient w.r.t the input 'h'</span>
-<span class="cm"># SHAPE MATCHING: d_h must be (8,). W2 is (2, 8), d_z2 is (2,).</span>
-<span class="cm"># W2.T @ d_z2 -> (8, 2) @ (2,) = (8,)</span>
-d_h  <span class="op">=</span> W2.T <span class="op">@</span> d_z2               
-
-<span class="cm"># 3. Backprop through ReLU (The Valve)</span>
-<span class="cm"># If z1 > 0, pass d_h backward. If z1 <= 0, multiply by 0.</span>
-d_z1 <span class="op">=</span> d_h <span class="op">*</span> (z1 <span class="op">&gt;</span> <span class="nm">0</span>).<span class="fn">float</span>()   
-
-<span class="cm"># 4. Backprop through Layer 1</span>
-<span class="cm"># SHAPE MATCHING: d_W1 must be (8, 4). d_z1 is (8,), x is (4,)</span>
-d_W1 <span class="op">=</span> torch.<span class="fn">outer</span>(d_z1, x)       
-d_b1 <span class="op">=</span> d_z1.clone()               
-
-<span class="cm"># Check shapes to ensure sanity!</span>
-<span class="fn">print</span>(<span class="st">f"W1 shape: {W1.shape} == d_W1 shape: {d_W1.shape}"</span>)  <span class="cm"># (8, 4) == (8, 4)</span>
-<span class="fn">print</span>(<span class="st">f"W2 shape: {W2.shape} == d_W2 shape: {d_W2.shape}"</span>)  <span class="cm"># (2, 8) == (2, 8)</span>
-
-<span class="cm"># ── VERIFY WITH AUTOGRAD ──────────────────────────────────────</span>
-W1_ag <span class="op">=</span> W1.clone().requires_grad_(<span class="kw">True</span>)
-W2_ag <span class="op">=</span> W2.clone().requires_grad_(<span class="kw">True</span>)
-b1_ag <span class="op">=</span> b1.clone().requires_grad_(<span class="kw">True</span>)
-b2_ag <span class="op">=</span> b2.clone().requires_grad_(<span class="kw">True</span>)
-
-z1_ag <span class="op">=</span> W1_ag <span class="op">@</span> x <span class="op">+</span> b1_ag
-h_ag  <span class="op">=</span> torch.<span class="fn">relu</span>(z1_ag)
-z2_ag <span class="op">=</span> W2_ag <span class="op">@</span> h_ag <span class="op">+</span> b2_ag
-loss_ag <span class="op">=</span> ((z2_ag <span class="op">-</span> target) <span class="op">**</span> <span class="nm">2</span>).<span class="fn">mean</span>()
-loss_ag.<span class="fn">backward</span>()
-
-<span class="cm"># Check they match!</span>
-<span class="fn">print</span>(torch.<span class="fn">allclose</span>(d_W1, W1_ag.grad))  <span class="cm"># True ✓</span>
-<span class="fn">print</span>(torch.<span class="fn">allclose</span>(d_W2, W2_ag.grad))  <span class="cm"># True ✓</span></pre>
-    </div>
-
-    <div class="callout info">
-      <div class="callout-icon">💡</div>
-      <div class="callout-text">
-        <strong>Think of Gradients as "Tug of War" Forces.</strong> 
-        When we compute <code>d_loss__d_w = 12.0</code>, what does that actually mean? It means the loss function is "pulling" on the weight <code>w</code> with a force of +12.0. If we increase <code>w</code>, the loss goes UP. To train the network, we simply step in the <em>opposite</em> direction of the force (<code>w = w - 0.01 * 12.0</code>). Backpropagation is just computing these pulling forces for every single weight in the network simultaneously.
-      </div>
+d_z1 <span class="op">=</span> d_h <span class="op">*</span> (z1 <span class="op">&gt;</span> <span class="nm">0</span>).<span class="fn">float</span>()     <span class="cm"># The ReLU Valve</span>
+d_W1 <span class="op">=</span> torch.<span class="fn">outer</span>(d_z1, x)       <span class="cm"># (8,) ⊗ (4,) = (8, 4) matches W1!</span>
+</pre>
     </div>
   </div>
 
   <div class="section">
-    <h2>torch.no_grad() — Disabling the Graph</h2>
-    <p>When you're doing inference (generating text, evaluating the model), you don't need gradients. Building the computation graph wastes memory and time. Use <code>torch.no_grad()</code> to disable it:</p>
+    <h2>Batches, Transformers, and Vanishing Gradients</h2>
+    <p>To finish bridging the gap to modern LLMs, we need to answer three massive questions.</p>
+
+    <div class="concept">
+      <div class="concept-title">1. Why do we average gradients over Mini-Batches?</div>
+      <p>Instead of calculating the gradient for 1 sentence, we calculate it for 32 sentences simultaneously, sum the gradients, and divide by 32. <strong>Why?</strong> First, GPU matrix multiplication is vastly more efficient in blocks. Second, a single sentence is "noisy" and might point the gradient in a weird direction. Averaging stabilizes the compass.</p>
+    </div>
+
+    <div class="concept">
+      <div class="concept-title">2. Why do deep networks cause Vanishing/Exploding Gradients?</div>
+      <p>Because the Chain Rule is just multiplication! If you have a 100-layer network, backprop will multiply 100 fractions together. <code>0.9 × 0.9 × 0.9 ... = 0.00002</code> (Vanishing gradient; early layers never learn). If it's <code>1.1 × 1.1 ... = 13,780</code> (Exploding gradient; network collapses to NaN). This is exactly why Transformers use <strong>Residual Connections</strong>—they act as gradient highways that bypass the multiplication!</p>
+    </div>
+
+    <div class="concept">
+      <div class="concept-title">3. How does this scale to Transformers?</div>
+      <p>Backprop in Llama 3 operates identically to our tiny script above, just scaled up. The flow of gradients goes: <code>Loss → Logits → Final LayerNorm → Attention Block 32 → MLP Block 32 → ... → Attention Block 1 → Embedding Matrix</code>. Every single weight matrix routes the gradient backward via outer products.</p>
+    </div>
+
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-text"><strong>The Gradient Accumulation Trap:</strong> <code>.backward()</code> ACCUMULATES gradients by default. If you don't call <code>optimizer.zero_grad()</code> at the start of step 1, step 2 will literally add its gradients on top of step 1's gradients. Your model will train on garbage.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>torch.no_grad() — Disabling the Engine</h2>
+    <p>When you are generating text (Inference), you aren't training. You don't need gradients. Use <code>torch.no_grad()</code> to tell PyTorch to stop tracking the forward graph. This frees up massive amounts of VRAM.</p>
 
     <div class="code-block">
       <div class="code-header">
         <div class="code-title">no_grad_usage.py</div>
         <div class="code-label">IMPORTANT</div>
       </div>
-<pre><span class="kw">import</span> torch
-
-model_weight <span class="op">=</span> torch.<span class="fn">randn</span>(<span class="nm">4</span>, <span class="nm">4</span>, requires_grad<span class="op">=</span><span class="kw">True</span>)
-x <span class="op">=</span> torch.<span class="fn">randn</span>(<span class="nm">4</span>)
-
-<span class="cm"># During training: grad_fn is tracked</span>
-y_train <span class="op">=</span> model_weight <span class="op">@</span> x
-<span class="fn">print</span>(y_train.grad_fn)   <span class="cm"># MmBackward0 — graph is built</span>
-
-<span class="cm"># During inference / evaluation: no graph needed</span>
-<span class="kw">with</span> torch.<span class="fn">no_grad</span>():
-    y_infer <span class="op">=</span> model_weight <span class="op">@</span> x
-    <span class="fn">print</span>(y_infer.grad_fn)  <span class="cm"># None — no graph, less memory!</span>
-
-<span class="cm"># You'll use this pattern constantly in Lesson 14 (inference)</span>
-<span class="cm"># Also use @torch.inference_mode() decorator for the same effect</span></pre>
+<pre><span class="kw">with</span> torch.<span class="fn">no_grad</span>():
+    y_infer <span class="op">=</span> model(x)
+    <span class="fn">print</span>(y_infer.grad_fn)  <span class="cm"># None — no graph, less memory!</span></pre>
     </div>
   </div>
 
@@ -449,25 +428,12 @@ y_train <span class="op">=</span> model_weight <span class="op">@</span> x
     <div class="concept">
       <div class="concept-title">Homework Challenges</div>
       <ol style="margin-left:20px; color:#8aa898; font-size:13px; line-height:1.8;">
-        <li style="margin-bottom:12px;"><strong>The Dead Neuron:</strong> In a forward pass, a neuron computes <code>z = -5.0</code>. It then passes through a ReLU activation. During the backward pass, an upstream gradient of <code>10.0</code> arrives at this ReLU node. What is the gradient passed backwards through the ReLU? <em>(Hint: think about the valve)</em>.</li>
-        <li style="margin-bottom:12px;"><strong>The Matrix Cheat Code:</strong> You have a weight matrix <code>W</code> of shape <code>(64, 128)</code>. You don't know the forward math, but you need to write the backward pass in PyTorch. What will be the exact shape of the gradient tensor <code>d_W</code>?</li>
-        <li style="margin-bottom:12px;"><strong>The Accumulation Bug:</strong> You run a training loop for 5 steps, but your loss skyrockets to infinity. You look at your code and see: <br><code>loss.backward()</code><br><code>optimizer.step()</code><br>What single critical line of code is missing, and why did its absence cause the network to explode?</li>
-        <li><strong>Advanced Code Challenge:</strong> Take the <code>mlp_manual.py</code> script above. Change the activation from <code>torch.relu(z1)</code> to a custom activation <code>z1 * 2</code>. Derive and update the manual backward pass code for this new "times two" activation node.</li>
+        <li style="margin-bottom:12px;"><strong>The Brute Force Math:</strong> If you wanted to compute numerical gradients for a 1-Billion parameter model, how many forward passes would one training step take? How many with Backprop?</li>
+        <li style="margin-bottom:12px;"><strong>The Dead Neuron:</strong> In a forward pass, a neuron computes <code>z = -5.0</code>. It then passes through a ReLU activation. During the backward pass, an upstream gradient of <code>10.0</code> arrives. What gradient gets passed backwards through the ReLU valve?</li>
+        <li style="margin-bottom:12px;"><strong>The Matrix Cheat Code:</strong> You have a weight matrix <code>W</code> of shape <code>(64, 128)</code>. You don't know the forward math, but you need to write the backward pass. What will be the exact shape of the gradient tensor <code>d_W</code>?</li>
+        <li style="margin-bottom:12px;"><strong>The Accumulation Bug:</strong> You run a training loop, but your loss skyrockets to infinity. You look at your code and see <code>loss.backward()</code> followed by <code>optimizer.step()</code>. What critical line of code is missing?</li>
       </ol>
     </div>
-  </div>
-
-  <div class="section">
-    <h2>What You Now Know</h2>
-    <ul class="checklist">
-      <li class="done"><strong>Why we optimize:</strong> Random guessing is impossible; calculus gives us a compass.</li>
-      <li class="done"><strong>Chain rule:</strong> Computes gradients through any composition of operations.</li>
-      <li class="done"><strong>Shape Matching:</strong> The ultimate cheat code for deriving matrix gradients.</li>
-      <li class="done"><strong>The Graph:</strong> PyTorch builds a computation graph automatically and traverses it with .backward()</li>
-      <li class="done"><strong>Accumulation trap:</strong> Always zero gradients before each training step.</li>
-      <li>How does gradient flow through the Attention mechanism? (Lesson 05)</li>
-      <li>What happens to gradients in very deep networks? (Lesson 08 — residual connections)</li>
-    </ul>
   </div>
 
   <a href="lesson-03.html" class="next-lesson">
