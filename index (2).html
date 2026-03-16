@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nanoLlama — Build an LLM from Scratch in Pure PyTorch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@300;400;600;700;900&family=Unbounded:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#08090a;
+  --paper:#0f1012;
+  --border:#1c1e22;
+  --lime:#b8f000;
+  --cyan:#00f0d0;
+  --mag:#f000b8;
+  --orange:#f07000;
+  --blue:#0070f0;
+  --text:#e8eaec;
+  --muted:#2a2e34;
+  --dim:#3a3e44;
+  --mono:'Inconsolata',monospace;
+  --display:'Unbounded',sans-serif;
+}
+
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--mono);
+  font-size:13px;
+  line-height:1.75;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ── GRID NOISE TEXTURE ── */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 39px, #ffffff03 39px, #ffffff03 40px),
+    repeating-linear-gradient(90deg, transparent, transparent 39px, #ffffff02 39px, #ffffff02 40px);
+  pointer-events:none;
+  z-index:0;
+}
+
+/* ── NAV ── */
+nav{
+  position:sticky;
+  top:0;
+  z-index:100;
+  background:rgba(8,9,10,0.92);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:14px 40px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.nav-logo{
+  font-family:var(--display);
+  font-size:14px;
+  font-weight:900;
+  color:var(--lime);
+  letter-spacing:0.02em;
+}
+.nav-logo span{color:var(--text);font-weight:300}
+.nav-links{display:flex;gap:24px;align-items:center}
+.nav-links a{
+  font-size:10px;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--dim);
+  text-decoration:none;
+  transition:color 0.15s;
+}
+.nav-links a:hover{color:var(--lime)}
+.nav-tag{
+  font-size:9px;
+  padding:3px 10px;
+  border:1px solid var(--border);
+  color:var(--dim);
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+}
+
+/* ── HERO ── */
+.hero{
+  position:relative;
+  z-index:1;
+  max-width:1100px;
+  margin:0 auto;
+  padding:100px 40px 80px;
+}
+.hero-eyebrow{
+  font-family:var(--display);
+  font-size:9px;
+  font-weight:600;
+  letter-spacing:0.2em;
+  text-transform:uppercase;
+  color:var(--lime);
+  margin-bottom:24px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  opacity:0;
+  animation:fadeUp 0.6s ease 0.1s forwards;
+}
+.hero-eyebrow::before{content:'';width:32px;height:1px;background:var(--lime)}
+.hero-eyebrow::after{content:'';flex:1;height:1px;background:var(--border)}
+
+h1{
+  font-family:var(--display);
+  font-size:clamp(42px,7vw,96px);
+  font-weight:900;
+  line-height:0.92;
+  letter-spacing:-0.02em;
+  margin-bottom:32px;
+  opacity:0;
+  animation:fadeUp 0.6s ease 0.2s forwards;
+}
+h1 .lime{color:var(--lime)}
+h1 .dim-text{color:#2a3040}
+
+.hero-desc{
+  font-size:15px;
+  line-height:1.8;
+  color:#606878;
+  max-width:580px;
+  margin-bottom:40px;
+  opacity:0;
+  animation:fadeUp 0.6s ease 0.3s forwards;
+}
+.hero-desc strong{color:var(--text)}
+
+.hero-stats{
+  display:flex;
+  gap:32px;
+  flex-wrap:wrap;
+  margin-bottom:52px;
+  opacity:0;
+  animation:fadeUp 0.6s ease 0.4s forwards;
+}
+.stat{border-left:2px solid var(--border);padding-left:14px}
+.stat-num{
+  font-family:var(--display);
+  font-size:22px;
+  font-weight:900;
+  color:var(--text);
+  line-height:1;
+  margin-bottom:4px;
+}
+.stat-num .unit{font-size:12px;color:var(--dim);font-weight:300}
+.stat-label{font-size:10px;color:var(--dim);letter-spacing:0.1em;text-transform:uppercase}
+
+.hero-actions{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  opacity:0;
+  animation:fadeUp 0.6s ease 0.5s forwards;
+}
+.btn-primary{
+  font-family:var(--display);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  padding:14px 28px;
+  background:var(--lime);
+  color:#000;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  transition:all 0.15s;
+}
+.btn-primary:hover{background:#d4ff00;transform:translateY(-1px)}
+.btn-secondary{
+  font-family:var(--display);
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  padding:14px 28px;
+  border:1px solid var(--border);
+  color:var(--dim);
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  transition:all 0.15s;
+}
+.btn-secondary:hover{border-color:var(--lime);color:var(--lime)}
+
+/* ── MODEL CARD ── */
+.model-strip{
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  padding:20px 40px;
+  display:flex;
+  gap:0;
+  overflow-x:auto;
+  max-width:1100px;
+  margin:0 auto 80px;
+  position:relative;
+  z-index:1;
+}
+.model-param{
+  flex:1;
+  min-width:140px;
+  padding:0 24px;
+  border-right:1px solid var(--border);
+}
+.model-param:first-child{padding-left:0}
+.model-param:last-child{border-right:none}
+.mp-label{font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--dim);margin-bottom:6px;font-family:var(--display)}
+.mp-value{font-family:var(--display);font-size:16px;font-weight:900;color:var(--text)}
+.mp-value span{font-size:10px;color:var(--dim);font-weight:300}
+
+/* ── SECTION HEADERS ── */
+.section{
+  max-width:1100px;
+  margin:0 auto;
+  padding:0 40px 100px;
+  position:relative;
+  z-index:1;
+}
+.section-header{
+  display:flex;
+  align-items:baseline;
+  gap:16px;
+  margin-bottom:48px;
+}
+.section-num{
+  font-family:var(--display);
+  font-size:11px;
+  font-weight:600;
+  color:var(--muted);
+  letter-spacing:0.15em;
+}
+.section-title{
+  font-family:var(--display);
+  font-size:clamp(22px,3vw,36px);
+  font-weight:900;
+  color:var(--text);
+  letter-spacing:-0.01em;
+}
+.section-title .hl{color:var(--lime)}
+.section-line{flex:1;height:1px;background:var(--border)}
+
+/* ── LESSON GRID ── */
+.lessons-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+  gap:1px;
+  background:var(--border);
+  border:1px solid var(--border);
+}
+.lesson-card{
+  background:var(--bg);
+  padding:28px 28px 24px;
+  text-decoration:none;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  transition:background 0.15s;
+  position:relative;
+  overflow:hidden;
+}
+.lesson-card::before{
+  content:'';
+  position:absolute;
+  left:0;top:0;bottom:0;
+  width:2px;
+  background:var(--lime);
+  transform:scaleY(0);
+  transform-origin:bottom;
+  transition:transform 0.2s ease;
+}
+.lesson-card:hover{background:#0c0e10}
+.lesson-card:hover::before{transform:scaleY(1)}
+
+.card-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.card-num{
+  font-family:var(--display);
+  font-size:9px;
+  font-weight:600;
+  letter-spacing:0.15em;
+  color:var(--muted);
+  text-transform:uppercase;
+}
+.card-tag{
+  font-size:9px;
+  padding:2px 8px;
+  border:1px solid var(--border);
+  color:var(--dim);
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  font-family:var(--display);
+  font-weight:600;
+}
+.card-tag.foundations{border-color:#001a30;color:#006080}
+.card-tag.architecture{border-color:#1a1000;color:#806000}
+.card-tag.training{border-color:#1a0020;color:#8000a0}
+.card-tag.inference{border-color:#001a10;color:#008050}
+
+.card-title{
+  font-family:var(--display);
+  font-size:15px;
+  font-weight:900;
+  color:var(--text);
+  line-height:1.2;
+  letter-spacing:-0.01em;
+}
+.card-title .sub{
+  display:block;
+  font-size:10px;
+  font-weight:300;
+  color:var(--dim);
+  margin-top:3px;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+}
+
+.card-desc{
+  font-size:11px;
+  color:#404850;
+  line-height:1.7;
+  flex:1;
+}
+
+.card-footer{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding-top:12px;
+  border-top:1px solid var(--border);
+  margin-top:auto;
+}
+.card-meta{font-size:10px;color:var(--muted);display:flex;gap:12px}
+.card-arrow{
+  font-size:16px;
+  color:var(--muted);
+  transition:all 0.15s;
+  transform:translateX(0);
+}
+.lesson-card:hover .card-arrow{
+  color:var(--lime);
+  transform:translateX(4px);
+}
+
+/* ── PHASE DIVIDERS ── */
+.phase-label{
+  grid-column:1/-1;
+  padding:14px 0 10px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  gap:12px;
+  background:var(--bg);
+}
+.phase-dot{width:6px;height:6px;border-radius:50%;background:var(--lime);flex-shrink:0}
+.phase-name{
+  font-family:var(--display);
+  font-size:9px;
+  font-weight:600;
+  letter-spacing:0.2em;
+  text-transform:uppercase;
+  color:var(--lime);
+}
+.phase-lessons{font-size:9px;color:var(--muted);letter-spacing:0.1em}
+
+/* ── ABOUT SECTION ── */
+.about-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:1px;
+  background:var(--border);
+  border:1px solid var(--border);
+}
+.about-cell{
+  background:var(--bg);
+  padding:32px 36px;
+}
+.about-cell.full{grid-column:1/-1}
+.about-label{
+  font-family:var(--display);
+  font-size:9px;
+  font-weight:600;
+  letter-spacing:0.2em;
+  text-transform:uppercase;
+  color:var(--lime);
+  margin-bottom:16px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.about-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.about-body{font-size:12px;color:#505870;line-height:1.8}
+.about-body strong{color:var(--text)}
+.about-body code{
+  background:#0c0e10;
+  border:1px solid var(--border);
+  padding:1px 6px;
+  color:var(--lime);
+  font-size:11px;
+}
+
+/* stack list */
+.stack-list{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.stack-item{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  font-size:11px;
+  color:#505870;
+}
+.stack-item::before{
+  content:'';
+  width:4px;height:4px;
+  border-radius:50%;
+  background:var(--border);
+  flex-shrink:0;
+}
+
+/* ── CODE PREVIEW ── */
+.code-preview{
+  background:#060708;
+  border:1px solid var(--border);
+  border-left:3px solid var(--lime);
+  margin-top:32px;
+  overflow:hidden;
+}
+.code-bar{
+  background:#0a0c0e;
+  padding:9px 16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:1px solid var(--border);
+}
+.code-filename{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+.code-lang{font-size:9px;padding:2px 8px;background:var(--lime);color:#000;font-weight:900}
+pre{
+  padding:20px;
+  font-size:12px;
+  line-height:1.75;
+  color:#c8d8e0;
+  overflow-x:auto;
+}
+.kw{color:#f07000}.fn{color:#00f0d0}.st{color:#b8f000}.cm{color:#1c2428;font-style:italic}
+.nm{color:#00b8f0}.cl{color:#f000b8}.op{color:#2a3a44}
+
+/* ── FOOTER ── */
+footer{
+  border-top:1px solid var(--border);
+  padding:40px;
+  max-width:1100px;
+  margin:0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:16px;
+  position:relative;
+  z-index:1;
+}
+.footer-logo{
+  font-family:var(--display);
+  font-size:12px;
+  font-weight:900;
+  color:var(--lime);
+}
+.footer-logo span{color:var(--muted);font-weight:300}
+.footer-note{font-size:10px;color:var(--muted);letter-spacing:0.08em}
+.footer-links{display:flex;gap:20px}
+.footer-links a{
+  font-size:10px;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--dim);
+  text-decoration:none;
+  transition:color 0.15s;
+}
+.footer-links a:hover{color:var(--lime)}
+
+/* ── PROGRESS BAR ── */
+.progress-bar{
+  position:fixed;
+  top:0;left:0;
+  height:2px;
+  background:var(--lime);
+  z-index:200;
+  transform-origin:left;
+  transform:scaleX(0);
+  transition:transform 0.1s linear;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.fade-in{
+  opacity:0;
+  transform:translateY(16px);
+  transition:opacity 0.5s ease, transform 0.5s ease;
+}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:700px){
+  nav{padding:14px 20px}
+  .hero{padding:60px 20px 60px}
+  .model-strip{padding:20px}
+  .section{padding:0 20px 60px}
+  .about-grid{grid-template-columns:1fr}
+  footer{padding:32px 20px;flex-direction:column;align-items:flex-start}
+  .nav-links{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+
+<!-- ── NAV ── -->
+<nav>
+  <div class="nav-logo">nano<span>Llama</span></div>
+  <div class="nav-links">
+    <a href="#lessons">Lessons</a>
+    <a href="#model">Architecture</a>
+    <a href="#about">About</a>
+    <a href="https://github.com" target="_blank">GitHub</a>
+  </div>
+  <div class="nav-tag">Free Course</div>
+</nav>
+
+<!-- ── HERO ── -->
+<div class="hero">
+  <div class="hero-eyebrow">Pure PyTorch · CPU-Trainable · No Shortcuts</div>
+
+  <h1>
+    Build an<br>
+    <span class="lime">LLM</span><br>
+    <span class="dim-text">from</span><br>
+    Scratch
+  </h1>
+
+  <p class="hero-desc">
+    15 lessons that take you from a single tensor to a working language model trained on your laptop.
+    <strong>No black boxes. Every line of code derived from first principles.</strong>
+    The same architecture used in Llama, Mistral, and every modern transformer.
+  </p>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-num">15</div>
+      <div class="stat-label">Lessons</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">215<span class="unit">K</span></div>
+      <div class="stat-label">Parameters</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">~30<span class="unit">min</span></div>
+      <div class="stat-label">CPU Training</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">0</div>
+      <div class="stat-label">Abstractions</div>
+    </div>
+  </div>
+
+  <div class="hero-actions">
+    <a href="lesson-01.html" class="btn-primary">Start Course →</a>
+    <a href="#lessons" class="btn-secondary">View All Lessons</a>
+  </div>
+</div>
+
+<!-- ── MODEL PARAMS STRIP ── -->
+<div class="model-strip" id="model">
+  <div class="model-param">
+    <div class="mp-label">Vocabulary</div>
+    <div class="mp-value">256 <span>byte-level</span></div>
+  </div>
+  <div class="model-param">
+    <div class="mp-label">d_model</div>
+    <div class="mp-value">64</div>
+  </div>
+  <div class="model-param">
+    <div class="mp-label">Attention Heads</div>
+    <div class="mp-value">4</div>
+  </div>
+  <div class="model-param">
+    <div class="mp-label">Layers</div>
+    <div class="mp-value">4</div>
+  </div>
+  <div class="model-param">
+    <div class="mp-label">d_ff (SwiGLU)</div>
+    <div class="mp-value">172</div>
+  </div>
+  <div class="model-param">
+    <div class="mp-label">Max Seq Len</div>
+    <div class="mp-value">128</div>
+  </div>
+  <div class="model-param">
+    <div class="mp-label">Total Params</div>
+    <div class="mp-value">214<span>,784</span></div>
+  </div>
+  <div class="model-param">
+    <div class="mp-label">Model Size</div>
+    <div class="mp-value">0.82 <span>MB</span></div>
+  </div>
+</div>
+
+<!-- ── LESSONS ── -->
+<div class="section" id="lessons">
+  <div class="section-header fade-in">
+    <span class="section-num">01 —</span>
+    <h2 class="section-title">The <span class="hl">15 Lessons</span></h2>
+    <span class="section-line"></span>
+  </div>
+
+  <div class="lessons-grid fade-in">
+
+    <!-- PHASE 1: FOUNDATIONS -->
+    <div class="phase-label">
+      <span class="phase-dot"></span>
+      <span class="phase-name">Phase 1 — Foundations</span>
+      <span class="phase-lessons">Lessons 01 – 04</span>
+    </div>
+
+    <!-- L01 -->
+    <a href="lesson-01.html" class="lesson-card">
+      <div class="card-top">
+        <span class="card-num">Lesson 01</span>
+        <span class="card-tag foundations">Foundations</span>
+      </div>
+      <div class="card-title">
+        Tensors
+        <span class="sub">The Building Block</span>
+      </div>
+      <div class="card-desc">
+        Before we can build a language model, we need to deeply understand the single data structure that powers all of deep learning. Every weight, every activation, every gradient — it's all tensors.
+      </div>
+      <div class="card-footer">
+        <div class="card-meta"><span>⏱ 45 min</span><span>🧱 Data Structures</span></div>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- L02 -->
+    <a href="lesson-02.html" class="lesson-card">
+      <div class="card-top">
+        <span class="card-num">Lesson 02</span>
+        <span class="card-tag foundations">Foundations</span>
+      </div>
+      <div class="card-title">
+        Autograd
+        <span class="sub">Backprop from Scratch</span>
+      </div>
+      <div class="card-desc">
+        How does PyTorch "know" how to update weights? We tear open the black box — implement backprop by hand, derive the chain rule, then watch PyTorch do it automatically.
+      </div>
+      <div class="card-footer">
+        <div class="card-meta"><span>⏱ 60 min</span><span>∂ Calculus</span></div>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- L03 -->
+    <a href="lesson-03.html" class="lesson-card">
+      <div class="card-top">
+        <span class="card-num">Lesson 03</span>
+        <span class="card-tag foundations">Foundations</span>
+      </div>
+      <div class="card-title">
+        Tokenization
+        <span class="sub">Dataset &amp; Vocabulary</span>
+      </div>
+      <div class="card-desc">
+        Neural networks eat numbers — not words. We build a byte-level tokenizer from scratch, create our training dataset, and build the PyTorch DataLoader pipeline that feeds nanoLlama.
+      </div>
+      <div class="card-footer">
+        <div class="card-meta"><span>⏱ 50 min</span><span>📝 Text → Tokens</span></div>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- L04 -->
+    <a href="lesson-04.html" class="lesson-card">
+      <div class="card-top">
+        <span class="card-num">Lesson 04</span>
+        <span class="card-tag foundations">Foundations</span>
+      </div>
+      <div class="card-title">
+        Embeddings
+        <span class="sub">Words as Vectors</span>
+      </div>
+      <div class="card-desc">
+        Token IDs are meaningless integers to a neural network. Embeddings transform them into rich vectors where similar meanings live nearby in space. The first real layer of nanoLlama.
+      </div>
+      <div class="card-footer">
+        <div class="card-meta"><span>⏱ 45 min</span><span>🗺 Vector Space</span></div>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- PHASE 2: ARCHITECTURE -->
+    <div class="phase-label">
+      <span class="phase-dot" style="background:var(--cyan)"></span>
+      <span class="phase-name" style="color:var(--cyan)">Phase 2 — Architecture</span>
+      <span class="phase-lessons">Lessons 05 – 10</span>
+    </div>
+
+    <!-- L05 -->
+    <a href="lesson-05.html" class="lesson-card">
+      <div class="card-top">
+        <span class="card-num">Lesson 05</span>
+        <span class="card-tag architecture">Architecture</span>
+      </div>
+      <div class="card-title">
+        Attention
+        <span class="sub">The Heart of the Transformer</span>
+      </div>
+      <div class="card-desc">
+        The most important lesson in the course. Attention lets tokens "look at" each other. Every other part of the transformer is scaffolding around this idea. Implemented step by step, no shortcuts.
+      </div>
+      <div class="card-footer">
+        <div class="card-meta"><span>⏱ 75 min</span><span>👁 Self-Attention</span></div>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- L06 -->
+    <a href="lesson-06.html" class="lesson-card">
+      <div class="card-top">
+        <span class="card-num">Lesson 06</span>
+        <span class="card-tag architecture">Architecture</span>
+      </div>
+      <div class="card-title">
+        Multi-Head Attention
+        <span class="sub">Parallel Perspectives</span>
+      </div>
+      <div class="card-desc">
+        Single-head attention can only look at tokens from one perspective. Multi-head runs several heads in parallel, each learning to focus on different relationships — syntax, coreference, semantics.
+      </div>
+      <div class="card-footer">
+        <div class="card-meta"><span>⏱ 60 min</span><span>🔀 Multi-Head</span></div>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- L07 -->
+    <a href="lesson-07.html" class="lesson-card">
+      <div class="card-top">
+        <span class="card-num">Lesson 07</span>
+        <span class="card-tag architecture">Architecture</span>
+      </div>
+      <div class="card-title">
+        FFN &amp; RMSNorm
+        <span class="sub">Feed-Forward Block</span>
+      </div>
+      <div class="card-desc">
+        Every transformer block has two sub-layers: attention and a feed-forward network. The FFN stores factual knowledge. We build Llama's SwiGLU variant and RMSNorm from scratch.
+      </div>
+      <div class="card-footer">
+        <div class="card-meta"><span>⏱ 55 min</span><span>🧮 SwiGLU</span></div>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- L08 -->
+    <a href="lesson-08.html" class="lesson-card">
+      <div class="card-top">
+        <span class="card-num">Lesson 08</span>
+        <span class="card-tag architecture">Architecture</span>
+      </div>
+      <div class="card-title">
+        Transformer Block
+        <span class="sub">Residual Connections</span>
+      </div>
+      <div class="card-desc">
+        We wire MHA, FFN, and RMSNorm together into the single transformer block — the repeating unit of Llama. The critical ingredient: residual connections, the trick that makes deep networks trainable.
+      </div>
+      <div class="card-footer">
+        <div class="card-meta"><span>⏱ 50 min</span><span>🔁 Residuals</span></div>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- L09 -->
+    <a href="lesson-09.html" class="lesson-card">
+      <div class="card-top">
+        <span class="card-num">Lesson 09</span>
+        <span class="card-tag architecture">Architecture</span>
+      </div>
+      <div class="card-title">
+        RoPE
+        <span class="sub">Positional Encoding</span>
+      </div>
+      <div class="card-desc">
+        Attention is permutation-invariant — without position info, "the cat sat" and "sat cat the" look identical. RoPE encodes position by rotating Q and K vectors. The modern standard used in Llama &amp; Mistral.
+      </div>
+      <div class="card-footer">
+        <div class="card-meta"><span>⏱ 60 min</span><span>🔄 Rotary Encoding</span></div>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- L10 -->
+    <a href="lesson-10.html" class="lesson-card">
+      <div class="card-top">
+        <span class="card-num">Lesson 10</span>
+        <span class="card-tag architecture">Architecture</span>
+      </div>
+      <div class="card-title">
+        Full Architecture
+        <span class="sub">Assembling nanoLlama</span>
+      </div>
+      <div class="card-desc">
+        Every piece is built. Now we assemble the complete nanoLlama: token embedding → N transformer blocks with RoPE → final RMSNorm → output head. A working, untrained language model.
+      </div>
+      <div class="card-footer">
+        <div class="card-meta"><span>⏱ 65 min</span><span>🏗 Full Model</span></div>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- PHASE 3: TRAINING -->
+    <div class="phase-label">
+      <span class="phase-dot" style="background:var(--orange)"></span>
+      <span class="phase-name" style="color:var(--orange)">Phase 3 — Training</span>
+      <span class="phase-lessons">Lessons 11 – 13</span>
+    </div>
+
+    <!-- L11 -->
+    <a href="lesson-11.html" class="lesson-card">
+      <div class="card-top">
+        <span class="card-num">Lesson 11</span>
+        <span class="card-tag training">Training</span>
+      </div>
+      <div class="card-title">
+        Training Loop
+        <span class="sub">Forward → Loss → Backward → Step</span>
+      </div>
+      <div class="card-desc">
+        The model exists. Now we make it learn. The training loop is a tight four-step cycle repeated thousands of times. Every LLM ever trained — from GPT-1 to Llama-3 — runs this same loop.
+      </div>
+      <div class="card-footer">
+        <div class="card-meta"><span>⏱ 55 min</span><span>🔄 Optimization</span></div>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- L12 -->
+    <a href="lesson-12.html" class="lesson-card">
+      <div class="card-top">
+        <span class="card-num">Lesson 12</span>
+        <span class="card-tag training">Training</span>
+      </div>
+      <div class="card-title">
+        Loss, Optimizer &amp; LR
+        <span class="sub">AdamW + Cosine Schedule</span>
+      </div>
+      <div class="card-desc">
+        Three knobs control how fast and well a model learns: loss function, optimizer, and LR schedule. We use AdamW with cosine decay — the same combination used to train GPT-2, Llama, and most modern LLMs.
+      </div>
+      <div class="card-footer">
+        <div class="card-meta"><span>⏱ 60 min</span><span>📈 AdamW</span></div>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- L13 -->
+    <a href="lesson-13.html" class="lesson-card">
+      <div class="card-top">
+        <span class="card-num">Lesson 13</span>
+        <span class="card-tag training">Training</span>
+      </div>
+      <div class="card-title">
+        CPU Training
+        <span class="sub">Tips &amp; Profiling</span>
+      </div>
+      <div class="card-desc">
+        Training on CPU is slow — but not as slow as you'd think if you profile carefully and eliminate bottlenecks. We measure where time actually goes and enable key PyTorch optimisations.
+      </div>
+      <div class="card-footer">
+        <div class="card-meta"><span>⏱ 50 min</span><span>⚡ Profiling</span></div>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- PHASE 4: INFERENCE -->
+    <div class="phase-label">
+      <span class="phase-dot" style="background:var(--mag)"></span>
+      <span class="phase-name" style="color:var(--mag)">Phase 4 — Inference &amp; Completion</span>
+      <span class="phase-lessons">Lessons 14 – 15</span>
+    </div>
+
+    <!-- L14 -->
+    <a href="lesson-14.html" class="lesson-card">
+      <div class="card-top">
+        <span class="card-num">Lesson 14</span>
+        <span class="card-tag inference">Inference</span>
+      </div>
+      <div class="card-title">
+        Text Generation
+        <span class="sub">Greedy, Temperature, Top-k</span>
+      </div>
+      <div class="card-desc">
+        The model is trained. Now we make it write. Inference is an autoregressive loop: feed a prompt, sample the next token, append it, repeat. We implement three sampling strategies, each producing very different text.
+      </div>
+      <div class="card-footer">
+        <div class="card-meta"><span>⏱ 50 min</span><span>✍ Sampling</span></div>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- L15 -->
+    <a href="lesson-15.html" class="lesson-card" style="background:#0a0c08">
+      <div class="card-top">
+        <span class="card-num">Lesson 15</span>
+        <span class="card-tag" style="border-color:#1a2a00;color:var(--lime)">Capstone</span>
+      </div>
+      <div class="card-title" style="color:var(--lime)">
+        Full Run
+        <span class="sub" style="color:#2a4010">Train &amp; Talk to nanoLlama</span>
+      </div>
+      <div class="card-desc">
+        Every piece built. Every concept understood. We assemble the complete pipeline in one file, run it to convergence on TinyShakespeare, and generate text. 215K parameters of pure PyTorch.
+      </div>
+      <div class="card-footer" style="border-color:#1a2a00">
+        <div class="card-meta"><span>⏱ 90 min</span><span>🏁 Complete Pipeline</span></div>
+        <span class="card-arrow" style="color:var(--lime)">→</span>
+      </div>
+    </a>
+
+  </div>
+</div>
+
+<!-- ── ABOUT ── -->
+<div class="section" id="about">
+  <div class="section-header fade-in">
+    <span class="section-num">02 —</span>
+    <h2 class="section-title">About the <span class="hl">Course</span></h2>
+    <span class="section-line"></span>
+  </div>
+
+  <div class="about-grid fade-in">
+
+    <div class="about-cell">
+      <div class="about-label">Philosophy</div>
+      <div class="about-body">
+        <p>This course exists because most LLM tutorials use high-level wrappers that hide the actual math. <strong>nanoLlama is a deliberate constraint</strong>: pure PyTorch, no HuggingFace, no einops. Every operation written explicitly.</p>
+        <p style="margin-top:12px">The model is intentionally tiny (215K params) so it trains in under 30 minutes on a laptop CPU. The point is never the result — it's understanding every computation that produces it.</p>
+      </div>
+    </div>
+
+    <div class="about-cell">
+      <div class="about-label">Prerequisites</div>
+      <div class="about-body">
+        <div class="stack-list">
+          <div class="stack-item">Python — comfortable with classes and list comprehensions</div>
+          <div class="stack-item">Basic calculus — derivatives, chain rule (we re-derive in Lesson 02)</div>
+          <div class="stack-item">NumPy or PyTorch — basic tensor operations</div>
+          <div class="stack-item">No ML background required — we build from first principles</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="about-cell">
+      <div class="about-label">Tech Stack</div>
+      <div class="about-body">
+        <div class="stack-list">
+          <div class="stack-item"><code>torch</code> — tensor ops, autograd, nn.Module</div>
+          <div class="stack-item"><code>torch.utils.data</code> — DataLoader, Dataset</div>
+          <div class="stack-item">Python stdlib only — no external dependencies</div>
+          <div class="stack-item">Runs on CPU — any machine, no GPU required</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="about-cell">
+      <div class="about-label">What You'll Build</div>
+      <div class="about-body">
+        <div class="stack-list">
+          <div class="stack-item">Byte-level tokenizer and text dataset pipeline</div>
+          <div class="stack-item">Multi-head attention with causal masking</div>
+          <div class="stack-item">SwiGLU feed-forward block and RMSNorm</div>
+          <div class="stack-item">RoPE positional encoding (same as Llama-3)</div>
+          <div class="stack-item">Complete transformer model, training loop, text generation</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="about-cell full">
+      <div class="about-label">The nanoLlama Model</div>
+      <div class="code-preview">
+        <div class="code-bar">
+          <span class="code-filename">nanollama.py — complete model, ~100 lines</span>
+          <span class="code-lang">PYTHON</span>
+        </div>
+<pre><span class="kw">import</span> torch
+<span class="kw">import</span> torch.nn <span class="kw">as</span> nn
+
+<span class="kw">class</span> <span class="cl">NanoLlama</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, vocab_size<span class="op">=</span><span class="nm">256</span>, d_model<span class="op">=</span><span class="nm">64</span>, n_heads<span class="op">=</span><span class="nm">4</span>, n_layers<span class="op">=</span><span class="nm">4</span>):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        self.embed  <span class="op">=</span> nn.<span class="cl">Embedding</span>(vocab_size, d_model)  <span class="cm"># 16,384 params</span>
+        self.blocks <span class="op">=</span> nn.<span class="cl">ModuleList</span>([<span class="cl">TransformerBlock</span>(d_model, n_heads) <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(n_layers)])
+        self.norm   <span class="op">=</span> <span class="cl">RMSNorm</span>(d_model)
+        <span class="cm"># Weight tying: output projection shares weights with embedding</span>
+        self.output <span class="op">=</span> <span class="kw">lambda</span> x: x <span class="op">@</span> self.embed.weight.T  <span class="cm"># 0 extra params</span>
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, tokens):            <span class="cm"># [batch, seq_len]</span>
+        x <span class="op">=</span> self.<span class="fn">embed</span>(tokens)             <span class="cm"># → [batch, seq_len, 64]</span>
+        <span class="kw">for</span> block <span class="kw">in</span> self.blocks:
+            x <span class="op">=</span> <span class="fn">block</span>(x)                  <span class="cm"># → [batch, seq_len, 64]</span>
+        <span class="kw">return</span> self.<span class="fn">output</span>(self.<span class="fn">norm</span>(x))  <span class="cm"># → [batch, seq_len, 256]</span></pre>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-logo">nano<span>Llama</span></div>
+  <div class="footer-note">Pure PyTorch · CPU-Trainable · 15 Lessons · 215K Params</div>
+  <div class="footer-links">
+    <a href="lesson-01.html">Start →</a>
+    <a href="https://github.com" target="_blank">GitHub</a>
+  </div>
+</footer>
+
+<script>
+// Progress bar
+const prog = document.getElementById('progress');
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = h.scrollTop / (h.scrollHeight - h.clientHeight);
+  prog.style.transform = `scaleX(${pct})`;
+});
+
+// Intersection observer for fade-in
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      // Stagger children
+      e.target.querySelectorAll('.lesson-card, .about-cell').forEach((el, i) => {
+        el.style.transitionDelay = `${i * 40}ms`;
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(12px)';
+        setTimeout(() => {
+          el.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+          el.style.opacity = '1';
+          el.style.transform = 'translateY(0)';
+        }, i * 40);
+      });
+    }
+  });
+}, { threshold: 0.05 });
+
+document.querySelectorAll('.fade-in').forEach(el => io.observe(el));
+</script>
+</body>
+</html>
