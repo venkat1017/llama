@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 01 — Tensors: The Building Block | nanoLlama</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Fraunces:ital,wght@0,300;0,700;0,900;1,300;1,700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0e0c;
+  --paper:#161512;
+  --border:#2a2720;
+  --accent:#f0a500;
+  --accent2:#e05a00;
+  --green:#3ddc84;
+  --blue:#5ab4ff;
+  --red:#ff5a5a;
+  --text:#e8e2d5;
+  --muted:#7a7060;
+  --mono:'JetBrains Mono',monospace;
+  --serif:'Fraunces',serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;line-height:1.7;min-height:100vh}
+
+/* NAV */
+nav{background:var(--paper);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-brand{font-family:var(--serif);font-size:18px;font-weight:900;color:var(--accent);letter-spacing:-0.02em}
+.nav-brand span{color:var(--text);font-weight:300}
+.nav-lessons{display:flex;gap:4px}
+.nav-lessons a{display:flex;align-items:center;justify-content:center;width:28px;height:28px;font-size:10px;border:1px solid var(--border);color:var(--muted);text-decoration:none;transition:all 0.15s}
+.nav-lessons a.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700}
+.nav-lessons a:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+.nav-right{font-size:11px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase}
+
+/* HERO */
+.hero{padding:64px 32px 48px;max-width:860px;margin:0 auto}
+.lesson-badge{display:inline-flex;align-items:center;gap:8px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:20px}
+.lesson-badge::before{content:'';width:24px;height:1px;background:var(--accent)}
+h1{font-family:var(--serif);font-size:clamp(32px,5vw,56px);font-weight:900;line-height:1.05;letter-spacing:-0.03em;margin-bottom:16px}
+h1 em{font-style:italic;color:var(--accent)}
+.hero-meta{display:flex;gap:20px;font-size:11px;color:var(--muted);margin-bottom:32px;letter-spacing:0.05em}
+.hero-meta span{display:flex;align-items:center;gap:6px}
+.hero-desc{font-size:15px;line-height:1.8;color:#c0b89a;max-width:640px;border-left:2px solid var(--accent);padding-left:20px}
+
+/* MAIN */
+.main{max-width:860px;margin:0 auto;padding:0 32px 80px}
+
+/* SECTIONS */
+.section{margin-bottom:56px}
+h2{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--text);margin-bottom:20px;display:flex;align-items:center;gap:12px}
+h2::after{content:'';flex:1;height:1px;background:var(--border)}
+h3{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:0.08em;text-transform:uppercase;margin:24px 0 10px}
+p{color:#c0b89a;line-height:1.8;margin-bottom:14px}
+p strong{color:var(--text);font-weight:500}
+
+/* CODE BLOCKS */
+.code-block{background:#0a0908;border:1px solid var(--border);border-left:3px solid var(--accent);margin:20px 0;overflow:hidden}
+.code-header{background:#111009;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.code-title{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+.code-label{font-size:10px;padding:2px 8px;background:var(--accent);color:#000;font-weight:700;letter-spacing:0.05em}
+pre{padding:20px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7}
+.kw{color:#ff9d5c} /* keywords */
+.fn{color:#7dd3fc} /* functions */
+.st{color:#86efac} /* strings */
+.cm{color:#4a4535;font-style:italic} /* comments */
+.nm{color:#f0a500} /* numbers */
+.cl{color:#e879f9} /* class names */
+.op{color:#94a3b8} /* operators */
+
+/* CONCEPT BOXES */
+.concept{background:var(--paper);border:1px solid var(--border);padding:20px 24px;margin:20px 0}
+.concept-title{font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--blue);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.concept-title::before{content:'◆';font-size:8px}
+.concept p{margin:0;font-size:13px;color:#b0a890}
+
+/* VISUAL DIAGRAM */
+.diagram{background:#0a0908;border:1px solid var(--border);padding:24px;margin:20px 0;overflow-x:auto}
+.diagram-title{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+.tensor-vis{font-family:var(--mono);font-size:12px;line-height:1.8;color:var(--text)}
+.tensor-row{display:flex;gap:2px;margin-bottom:2px}
+.tensor-cell{width:44px;height:32px;display:flex;align-items:center;justify-content:center;border:1px solid #2a2520;font-size:11px;transition:background 0.2s}
+.tensor-cell:hover{background:#2a2520}
+.t0{background:#1a1208;color:#f0a500}
+.t1{background:#0a1a12;color:#3ddc84}
+.t2{background:#0a1018;color:#5ab4ff}
+.dim-label{font-size:10px;color:var(--muted);letter-spacing:0.08em}
+
+/* CALLOUT */
+.callout{display:flex;gap:16px;padding:16px 20px;margin:20px 0;border:1px solid}
+.callout.info{border-color:#1a3a5a;background:#0a1520}
+.callout.warning{border-color:#3a2a00;background:#160f00}
+.callout.success{border-color:#0a3a1a;background:#040f08}
+.callout-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.callout-text{font-size:12px;line-height:1.7;color:#a0987e}
+.callout-text strong{color:var(--text)}
+
+/* INTERACTIVE */
+.interactive{background:var(--paper);border:1px solid var(--border);padding:0;margin:24px 0;overflow:hidden}
+.interactive-header{padding:12px 20px;background:#111009;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.interactive-title{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--green)}
+.run-btn{font-family:var(--mono);font-size:11px;padding:6px 16px;background:var(--green);color:#000;border:none;cursor:pointer;font-weight:700;letter-spacing:0.05em;transition:opacity 0.15s}
+.run-btn:hover{opacity:0.85}
+.interactive-code{padding:16px 20px;font-size:12px;line-height:1.7;border-bottom:1px solid var(--border)}
+.interactive-output{padding:16px 20px;font-size:12px;line-height:1.7;color:var(--green);min-height:60px;background:#040805}
+.output-label{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+
+/* CHECKLIST */
+.checklist{list-style:none;margin:16px 0}
+.checklist li{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #1a1612;font-size:13px;color:#b0a890}
+.checklist li:last-child{border-bottom:none}
+.checklist li::before{content:'○';color:var(--muted);flex-shrink:0}
+.checklist li.done::before{content:'●';color:var(--green)}
+
+/* NEXT */
+.next-lesson{background:var(--paper);border:1px solid var(--border);padding:28px;display:flex;align-items:center;justify-content:space-between;margin-top:64px;text-decoration:none}
+.next-lesson:hover{border-color:var(--accent)}
+.next-label{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.next-title{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--text)}
+.next-arrow{font-size:24px;color:var(--accent)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">nano<span>Llama</span></div>
+  <div class="nav-lessons">
+    <a href="lesson-01.html" class="active">01</a>
+    <a href="lesson-02.html">02</a>
+    <a href="lesson-03.html">03</a>
+    <a href="lesson-04.html">04</a>
+    <a href="lesson-05.html">05</a>
+    <a href="#">06</a><a href="#">07</a><a href="#">08</a><a href="#">09</a><a href="#">10</a>
+    <a href="#">11</a><a href="#">12</a><a href="#">13</a><a href="#">14</a><a href="#">15</a>
+  </div>
+  <div class="nav-right">CPU · Pure PyTorch</div>
+</nav>
+
+<div class="hero">
+  <div class="lesson-badge">Lesson 01 of 15</div>
+  <h1>Tensors: <em>The Building Block</em><br>of Everything</h1>
+  <div class="hero-meta">
+    <span>⏱ ~45 min</span>
+    <span>🧠 Fundamentals</span>
+    <span>💻 CPU only</span>
+  </div>
+  <p class="hero-desc">
+    Before we can build a language model, we need to deeply understand the single data structure that powers all of deep learning: the <strong>tensor</strong>. Every weight, every activation, every gradient — it's all tensors.
+  </p>
+</div>
+
+<div class="main">
+
+  <!-- SECTION 1 -->
+  <div class="section">
+    <h2>What is a Tensor?</h2>
+    <p>A tensor is simply a <strong>multi-dimensional array of numbers</strong>. That's it. The magic isn't the data structure — it's what PyTorch does with it: automatic differentiation, device management, and highly optimized math operations.</p>
+    <p>Think of tensors as a generalization:</p>
+
+    <div class="diagram">
+      <div class="diagram-title">Tensor dimensions — scalars to 3D arrays</div>
+      <div class="tensor-vis">
+        <div style="display:flex;gap:40px;flex-wrap:wrap">
+          <div>
+            <div class="dim-label" style="margin-bottom:8px">Scalar (0D) — a single number</div>
+            <div class="tensor-row"><div class="tensor-cell t0">3.14</div></div>
+            <div class="dim-label" style="margin-top:6px">shape: ()</div>
+          </div>
+          <div>
+            <div class="dim-label" style="margin-bottom:8px">Vector (1D) — a list</div>
+            <div class="tensor-row">
+              <div class="tensor-cell t1">0.2</div>
+              <div class="tensor-cell t1">0.8</div>
+              <div class="tensor-cell t1">-0.4</div>
+              <div class="tensor-cell t1">1.1</div>
+            </div>
+            <div class="dim-label" style="margin-top:6px">shape: (4,)</div>
+          </div>
+          <div>
+            <div class="dim-label" style="margin-bottom:8px">Matrix (2D)</div>
+            <div class="tensor-row">
+              <div class="tensor-cell t2">1.0</div><div class="tensor-cell t2">0.5</div><div class="tensor-cell t2">-1.2</div>
+            </div>
+            <div class="tensor-row">
+              <div class="tensor-cell t2">0.3</div><div class="tensor-cell t2">2.1</div><div class="tensor-cell t2">0.7</div>
+            </div>
+            <div class="dim-label" style="margin-top:6px">shape: (2, 3)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p>In a language model, our inputs will be 3D tensors of shape <code>(batch_size, sequence_length, embedding_dim)</code>. Every word is a row of floats, every sentence is a matrix, and a batch of sentences is a 3D tensor.</p>
+  </div>
+
+  <!-- SECTION 2 -->
+  <div class="section">
+    <h2>Creating Tensors in PyTorch</h2>
+    <p>Let's write our first lines of actual PyTorch. Run this in your Python environment — it requires only <code>torch</code>.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-title">tensor_basics.py</div>
+        <div class="code-label">LESSON 01</div>
+      </div>
+<pre><span class="kw">import</span> torch
+<span class="kw">import</span> torch.nn <span class="kw">as</span> nn
+
+<span class="cm"># ── 1. Creating tensors from scratch ──────────────────────────</span>
+
+<span class="cm"># From a Python list</span>
+x <span class="op">=</span> torch.<span class="fn">tensor</span>([<span class="nm">1.0</span>, <span class="nm">2.0</span>, <span class="nm">3.0</span>, <span class="nm">4.0</span>])
+<span class="fn">print</span>(<span class="st">f"x = {x}"</span>)              <span class="cm"># tensor([1., 2., 3., 4.])</span>
+<span class="fn">print</span>(<span class="st">f"shape: {x.shape}"</span>)     <span class="cm"># torch.Size([4])</span>
+<span class="fn">print</span>(<span class="st">f"dtype: {x.dtype}"</span>)     <span class="cm"># torch.float32</span>
+
+<span class="cm"># All zeros — common for initializing bias terms</span>
+zeros <span class="op">=</span> torch.<span class="fn">zeros</span>(<span class="nm">3</span>, <span class="nm">4</span>)       <span class="cm"># 3 rows, 4 columns</span>
+<span class="fn">print</span>(zeros.shape)               <span class="cm"># torch.Size([3, 4])</span>
+
+<span class="cm"># Random — used for weight initialization</span>
+W <span class="op">=</span> torch.<span class="fn">randn</span>(<span class="nm">4</span>, <span class="nm">8</span>)           <span class="cm"># normal distribution N(0,1)</span>
+<span class="fn">print</span>(W.shape)                   <span class="cm"># torch.Size([4, 8])</span>
+
+<span class="cm"># ── 2. The crucial attributes ──────────────────────────────────</span>
+<span class="fn">print</span>(W.shape)   <span class="cm"># dimensions</span>
+<span class="fn">print</span>(W.dtype)   <span class="cm"># float32, float16, int64, etc.</span>
+<span class="fn">print</span>(W.device)  <span class="cm"># cpu (or cuda:0 if GPU)</span>
+<span class="fn">print</span>(W.requires_grad)  <span class="cm"># False — not tracking gradients yet</span></pre>
+    </div>
+
+    <div class="concept">
+      <div class="concept-title">Why float32?</div>
+      <p>By default, PyTorch uses 32-bit floating point numbers. Each number takes 4 bytes. A model with 1 billion parameters = 4 GB just for the weights. This is why quantization (int4, int8) matters so much — but that's lesson 13. For now: float32 = standard precision for training on CPU.</p>
+    </div>
+
+    <h3>Tensor Operations — The Math We Need</h3>
+    <p>Every layer in our Llama model ultimately reduces to a few operations. Understand these deeply:</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-title">core_operations.py</div>
+        <div class="code-label">MUST KNOW</div>
+      </div>
+<pre><span class="kw">import</span> torch
+
+<span class="cm"># ── Matrix Multiplication ─────────────────────────────────────
+# This is 80% of what neural networks do.</span>
+A <span class="op">=</span> torch.<span class="fn">randn</span>(<span class="nm">3</span>, <span class="nm">4</span>)  <span class="cm"># 3 tokens, 4 features each</span>
+B <span class="op">=</span> torch.<span class="fn">randn</span>(<span class="nm">4</span>, <span class="nm">8</span>)  <span class="cm"># projection: 4 features → 8 features</span>
+C <span class="op">=</span> A <span class="op">@</span> B              <span class="cm"># @ is matmul operator</span>
+<span class="fn">print</span>(C.shape)          <span class="cm"># torch.Size([3, 8]) ✓</span>
+
+<span class="cm"># Rule: (m, k) @ (k, n) → (m, n)
+# The inner dimensions MUST match.</span>
+
+<span class="cm"># ── Element-wise operations ───────────────────────────────────</span>
+x <span class="op">=</span> torch.<span class="fn">tensor</span>([<span class="nm">1.0</span>, <span class="nm">-2.0</span>, <span class="nm">3.0</span>])
+y <span class="op">=</span> torch.<span class="fn">tensor</span>([<span class="nm">0.5</span>,  <span class="nm">0.5</span>, <span class="nm">0.5</span>])
+
+<span class="fn">print</span>(x <span class="op">+</span> y)   <span class="cm"># [1.5, -1.5, 3.5]  — add each pair</span>
+<span class="fn">print</span>(x <span class="op">*</span> y)   <span class="cm"># [0.5, -1.0, 1.5]  — multiply each pair</span>
+<span class="fn">print</span>(x <span class="op">**</span> <span class="nm">2</span>)  <span class="cm"># [1.0,  4.0, 9.0]  — square each element</span>
+
+<span class="cm"># ── Reshaping — critical for attention ───────────────────────</span>
+x <span class="op">=</span> torch.<span class="fn">randn</span>(<span class="nm">2</span>, <span class="nm">6</span>)        <span class="cm"># batch=2, seq_len×d_model = 6</span>
+x2 <span class="op">=</span> x.<span class="fn">view</span>(<span class="nm">2</span>, <span class="nm">2</span>, <span class="nm">3</span>)         <span class="cm"># reshape to (batch, heads, features)</span>
+x3 <span class="op">=</span> x.<span class="fn">reshape</span>(<span class="nm">2</span>, <span class="nm">3</span>, <span class="nm">2</span>)      <span class="cm"># another reshape</span>
+x4 <span class="op">=</span> x.<span class="fn">transpose</span>(<span class="nm">0</span>, <span class="nm">1</span>)       <span class="cm"># swap dim 0 and 1 → (6, 2)</span>
+
+<span class="cm"># ── Reduction ops — used in normalization layers ──────────────</span>
+x <span class="op">=</span> torch.<span class="fn">randn</span>(<span class="nm">3</span>, <span class="nm">4</span>)
+<span class="fn">print</span>(x.<span class="fn">mean</span>())            <span class="cm"># scalar mean of all elements</span>
+<span class="fn">print</span>(x.<span class="fn">mean</span>(dim<span class="op">=</span><span class="nm">-1</span>))     <span class="cm"># mean along last dim → shape (3,)</span>
+<span class="fn">print</span>(x.<span class="fn">std</span>(dim<span class="op">=</span><span class="nm">-1</span>))      <span class="cm"># std along last dim → shape (3,)</span>
+<span class="fn">print</span>(x.<span class="fn">sum</span>(dim<span class="op">=</span><span class="nm">0</span>))       <span class="cm"># sum along first dim → shape (4,)</span></pre>
+    </div>
+  </div>
+
+  <!-- SECTION 3: requires_grad -->
+  <div class="section">
+    <h2>The Secret Sauce: requires_grad</h2>
+    <p>This single attribute is what separates a "dumb array" from a <strong>learnable parameter</strong>. When you set <code>requires_grad=True</code>, PyTorch starts recording every operation applied to that tensor in a <strong>computation graph</strong>. When you call <code>.backward()</code>, it walks back through that graph and computes gradients automatically.</p>
+    <p>This is called <strong>automatic differentiation</strong> — or autograd. We'll go deep on it in Lesson 02, but let's see it in action first:</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-title">requires_grad_intro.py</div>
+        <div class="code-label">KEY CONCEPT</div>
+      </div>
+<pre><span class="kw">import</span> torch
+
+<span class="cm"># This is a "learnable" tensor — PyTorch will compute its gradient</span>
+w <span class="op">=</span> torch.<span class="fn">tensor</span>([<span class="nm">2.0</span>], requires_grad<span class="op">=</span><span class="kw">True</span>)
+b <span class="op">=</span> torch.<span class="fn">tensor</span>([<span class="nm">1.0</span>], requires_grad<span class="op">=</span><span class="kw">True</span>)
+
+<span class="cm"># Our "model": y = w*x + b  (a linear neuron)</span>
+x <span class="op">=</span> torch.<span class="fn">tensor</span>([<span class="nm">3.0</span>])   <span class="cm"># input — NOT learnable</span>
+y_pred <span class="op">=</span> w <span class="op">*</span> x <span class="op">+</span> b         <span class="cm"># = 2.0*3.0 + 1.0 = 7.0</span>
+y_true <span class="op">=</span> torch.<span class="fn">tensor</span>([<span class="nm">5.0</span>]) <span class="cm"># what we wanted</span>
+
+<span class="cm"># Loss: how wrong were we? (Mean Squared Error)</span>
+loss <span class="op">=</span> (y_pred <span class="op">-</span> y_true) <span class="op">**</span> <span class="nm">2</span>  <span class="cm"># = (7-5)² = 4.0</span>
+<span class="fn">print</span>(<span class="st">f"loss: {loss.item():.4f}"</span>)  <span class="cm"># 4.0</span>
+
+<span class="cm"># Magic: compute gradients with ONE line</span>
+loss.<span class="fn">backward</span>()
+
+<span class="cm"># Now w and b have .grad populated!</span>
+<span class="fn">print</span>(<span class="st">f"dLoss/dw: {w.grad.item():.4f}"</span>)  <span class="cm"># 12.0</span>
+<span class="fn">print</span>(<span class="st">f"dLoss/db: {b.grad.item():.4f}"</span>)  <span class="cm"># 4.0</span>
+
+<span class="cm"># These gradients tell us: increase w → loss gets bigger (+12)
+# So we should DECREASE w to reduce loss.
+# This is gradient descent — Lesson 12 covers this fully.</span></pre>
+    </div>
+
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-text"><strong>The gradient is a direction.</strong> <code>w.grad = 12.0</code> means: "if you increase w by 1.0, the loss increases by ~12.0." To reduce loss, we move w in the <em>opposite</em> direction — we subtract a small multiple of the gradient. That small multiple is the <strong>learning rate</strong>.</div>
+    </div>
+  </div>
+
+  <!-- SECTION 4: shapes -->
+  <div class="section">
+    <h2>Shape Tracking: Your Most Important Skill</h2>
+    <p>When building Llama, 90% of bugs are <strong>shape mismatches</strong>. Train yourself to track shapes through every operation. Here's the shape story for our nanoLlama:</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-title">shape_tracking.py — the shapes in our model</div>
+        <div class="code-label">PREVIEW</div>
+      </div>
+<pre><span class="kw">import</span> torch
+
+<span class="cm"># Our nanoLlama hyperparameters (tiny, for CPU)</span>
+batch_size   <span class="op">=</span> <span class="nm">4</span>    <span class="cm"># 4 sentences at once</span>
+seq_len      <span class="op">=</span> <span class="nm">32</span>   <span class="cm"># 32 tokens per sentence</span>
+vocab_size   <span class="op">=</span> <span class="nm">256</span>  <span class="cm"># 256 unique tokens (byte-level)</span>
+d_model      <span class="op">=</span> <span class="nm">64</span>   <span class="cm"># each token represented by 64 numbers</span>
+n_heads      <span class="op">=</span> <span class="nm">4</span>    <span class="cm"># attention heads</span>
+n_layers     <span class="op">=</span> <span class="nm">4</span>    <span class="cm"># transformer blocks</span>
+
+<span class="cm"># ── The data flow through our model ──────────────────────────</span>
+
+<span class="cm"># Step 1: Input — token indices</span>
+tokens <span class="op">=</span> torch.<span class="fn">randint</span>(<span class="nm">0</span>, vocab_size, (batch_size, seq_len))
+<span class="fn">print</span>(tokens.shape)   <span class="cm"># [4, 32]   — integers</span>
+
+<span class="cm"># Step 2: After embedding lookup</span>
+<span class="cm"># Each integer becomes a vector of size d_model</span>
+x <span class="op">=</span> torch.<span class="fn">randn</span>(batch_size, seq_len, d_model)
+<span class="fn">print</span>(x.shape)        <span class="cm"># [4, 32, 64] — now floats!</span>
+
+<span class="cm"># Step 3: After attention (shape is preserved — key insight!)</span>
+<span class="cm"># Attention mixes information between tokens but doesn't change shape</span>
+after_attn <span class="op">=</span> torch.<span class="fn">randn</span>(batch_size, seq_len, d_model)
+<span class="fn">print</span>(after_attn.shape)  <span class="cm"># [4, 32, 64] — same!</span>
+
+<span class="cm"># Step 4: Final output — predict next token for each position</span>
+logits <span class="op">=</span> torch.<span class="fn">randn</span>(batch_size, seq_len, vocab_size)
+<span class="fn">print</span>(logits.shape)   <span class="cm"># [4, 32, 256] — one probability per token</span>
+
+<span class="cm"># The model: [4,32] → embed → [4,32,64] → transformer → [4,32,64] → project → [4,32,256]</span></pre>
+    </div>
+
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-text"><strong>Golden rule:</strong> Before writing any layer, write down the input shape and expected output shape as a comment. Then verify it with a <code>print(x.shape)</code> after every layer as you build. This habit alone will save you hours of debugging.</div>
+    </div>
+  </div>
+
+  <!-- SECTION 5: hands-on exercise -->
+  <div class="section">
+    <h2>Hands-On Exercise</h2>
+    <p>Before moving on, complete this exercise. It tests everything in this lesson:</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-title">exercise_01.py — complete the blanks</div>
+        <div class="code-label">EXERCISE</div>
+      </div>
+<pre><span class="kw">import</span> torch
+
+<span class="cm"># 1. Create a random tensor of shape (2, 3, 4) — simulating
+#    batch=2, seq_len=3, d_model=4</span>
+x <span class="op">=</span> <span class="cm"># YOUR CODE HERE</span>
+<span class="fn">print</span>(x.shape)  <span class="cm"># should be torch.Size([2, 3, 4])</span>
+
+<span class="cm"># 2. Compute the mean of x along the last dimension (d_model).
+#    This is what normalization layers will do.</span>
+mean <span class="op">=</span> <span class="cm"># YOUR CODE HERE</span>
+<span class="fn">print</span>(mean.shape)  <span class="cm"># should be torch.Size([2, 3])</span>
+
+<span class="cm"># 3. Create a weight matrix W of shape (4, 8).
+#    Matrix-multiply x by W.
+#    What is the output shape?</span>
+W <span class="op">=</span> <span class="cm"># YOUR CODE HERE</span>
+out <span class="op">=</span> <span class="cm"># YOUR CODE HERE</span>
+<span class="fn">print</span>(out.shape)   <span class="cm"># should be torch.Size([2, 3, 8])</span>
+
+<span class="cm"># 4. Mark W as a learnable parameter</span>
+W <span class="op">=</span> torch.<span class="fn">randn</span>(<span class="nm">4</span>, <span class="nm">8</span>, requires_grad<span class="op">=</span><span class="cm"># YOUR CODE HERE</span>)
+<span class="fn">print</span>(W.requires_grad)  <span class="cm"># True</span>
+
+<span class="cm"># SOLUTION (run after trying):
+# x = torch.randn(2, 3, 4)
+# mean = x.mean(dim=-1)
+# W = torch.randn(4, 8)
+# out = x @ W
+# W = torch.randn(4, 8, requires_grad=True)</span></pre>
+    </div>
+
+    <h3>What you should be able to answer</h3>
+    <ul class="checklist">
+      <li class="done">What is a tensor and how does it differ from a Python list?</li>
+      <li class="done">What does <code>shape</code>, <code>dtype</code>, and <code>device</code> tell you?</li>
+      <li class="done">How does matrix multiplication work and what are the shape rules?</li>
+      <li class="done">What does <code>requires_grad=True</code> do?</li>
+      <li>What will the shape be after embedding lookup? (covered in Lesson 04)</li>
+      <li>Why does attention preserve the input shape? (covered in Lesson 05)</li>
+    </ul>
+  </div>
+
+  <!-- WHAT'S NEXT -->
+  <div class="section">
+    <h2>What's Coming in Lesson 02</h2>
+    <div class="callout success">
+      <div class="callout-icon">→</div>
+      <div class="callout-text">In <strong>Lesson 02</strong>, we'll go deep on <strong>autograd</strong> — how PyTorch computes gradients automatically. We'll implement backpropagation by hand for a tiny network, then watch PyTorch do the same thing in one line. Understanding this is critical for debugging training runs.</div>
+    </div>
+  </div>
+
+  <a href="lesson-02.html" class="next-lesson">
+    <div>
+      <div class="next-label">Next Lesson</div>
+      <div class="next-title">Lesson 02 — Autograd: Backprop from Scratch</div>
+    </div>
+    <div class="next-arrow">→</div>
+  </a>
+
+</div>
+</body>
+</html>

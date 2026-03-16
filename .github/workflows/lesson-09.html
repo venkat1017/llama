@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 09 — RoPE: Positional Encoding | nanoLlama</title>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Josefin+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f8f4ef;--paper:#fff;--border:#e0d8cc;
+  --ink:#2a1f14;--accent:#b5451b;--blue:#1a4a7a;--green:#1a6a3a;
+  --muted:#8a7a68;
+  --mono:'Courier Prime',monospace;--sans:'Josefin Sans',sans-serif;
+}
+body{background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:14px;line-height:1.75;min-height:100vh}
+nav{background:var(--paper);border-bottom:2px solid var(--ink);padding:12px 36px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-brand{font-family:var(--sans);font-size:17px;font-weight:700;color:var(--ink);letter-spacing:0.05em}
+.nav-brand span{color:var(--accent);font-weight:300}
+.nav-lessons{display:flex;gap:3px}
+.nav-lessons a{display:flex;align-items:center;justify-content:center;width:27px;height:27px;font-size:10px;border:1px solid var(--border);color:var(--muted);text-decoration:none;transition:all 0.15s}
+.nav-lessons a.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.nav-lessons a.done{background:#f0e8e0;border-color:var(--border)}
+.nav-lessons a:hover:not(.active){background:var(--ink);color:#fff;border-color:var(--ink)}
+.nav-right{font-size:10px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase}
+.hero{padding:60px 40px 36px;max-width:880px;margin:0 auto}
+.badge{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+h1{font-family:var(--sans);font-size:clamp(36px,6vw,72px);font-weight:700;line-height:1.0;letter-spacing:-0.02em;margin-bottom:14px;color:var(--ink)}
+h1 em{font-style:normal;color:var(--accent);font-weight:300}
+.hero-meta{display:flex;gap:20px;font-size:11px;color:var(--muted);margin-bottom:24px}
+.hero-desc{font-size:14px;line-height:1.8;color:#5a4a38;max-width:640px;border-left:3px solid var(--accent);padding-left:18px}
+.main{max-width:880px;margin:0 auto;padding:0 40px 80px}
+.section{margin-bottom:52px}
+h2{font-family:var(--sans);font-size:22px;font-weight:700;color:var(--ink);margin-bottom:18px;display:flex;align-items:center;gap:12px}
+h2::after{content:'';flex:1;height:1px;background:var(--border)}
+h3{font-family:var(--sans);font-size:12px;font-weight:600;color:var(--accent);letter-spacing:0.15em;text-transform:uppercase;margin:22px 0 10px}
+p{color:#4a3a28;line-height:1.8;margin-bottom:14px}
+p strong{color:var(--ink);font-weight:700}
+code{background:#f0e8e0;padding:2px 6px;color:var(--accent);font-size:12px;border:1px solid var(--border)}
+.code-block{background:var(--ink);margin:18px 0;overflow:hidden}
+.code-header{background:#1a1208;padding:9px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #3a2818}
+.code-title{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#7a6a50}
+.code-label{font-size:9px;padding:2px 8px;background:var(--accent);color:#fff;font-weight:700}
+pre{padding:18px;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.75;color:#e8dcc8}
+.kw{color:#e8904a}.fn{color:#78d4a0}.st{color:#b8d870}.cm{color:#3a2a18;font-style:italic}.nm{color:#78b8f0}.cl{color:#e078c0}.op{color:#6a7a8a}
+.concept{background:var(--paper);border:1px solid var(--border);border-left:4px solid var(--accent);padding:18px 22px;margin:18px 0}
+.concept-title{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--blue);margin-bottom:8px}
+.concept p{margin:0;font-size:13px;color:#5a4a38}
+.callout{display:flex;gap:14px;padding:14px 18px;margin:18px 0;border:1px solid}
+.callout.info{border-color:#a0c0e8;background:#f0f5ff}
+.callout.warn{border-color:#e8c080;background:#fdf8f0}
+.callout.good{border-color:#80d4a0;background:#f0fdf5}
+.callout-icon{font-size:14px;flex-shrink:0;margin-top:2px}
+.callout-text{font-size:12px;line-height:1.7;color:#5a4a38}
+.callout-text strong{color:var(--ink)}
+
+/* ROPE DIAGRAM */
+.rope-diagram{background:var(--paper);border:1px solid var(--border);padding:24px;margin:18px 0;overflow-x:auto}
+.rope-title{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+.rope-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px;flex-wrap:wrap}
+.rope-token{padding:6px 12px;background:var(--bg);border:1px solid var(--border);color:var(--ink);min-width:60px;text-align:center}
+.rope-arrow{color:var(--muted)}
+.rope-vec{display:flex;gap:2px}
+.rope-pair{display:flex;flex-direction:column;gap:1px}
+.rp-a{padding:2px 6px;font-size:10px;background:#fee8e0;border:1px solid #e8c0b0;color:var(--accent)}
+.rp-b{padding:2px 6px;font-size:10px;background:#e0e8fe;border:1px solid #b0c0e8;color:var(--blue)}
+.rope-pos{font-size:10px;color:var(--muted);margin-left:6px}
+
+.math-box{background:var(--bg);border:1px solid var(--border);padding:16px;margin:14px 0;text-align:center;font-size:13px}
+.math-box .eq{color:var(--ink);margin-bottom:6px}
+.math-box .explain{font-size:11px;color:var(--muted)}
+
+.checklist{list-style:none;margin:14px 0}
+.checklist li{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;color:#5a4a38}
+.checklist li:last-child{border-bottom:none}
+.checklist li::before{content:'';width:10px;height:10px;border:2px solid var(--muted);flex-shrink:0;margin-top:3px;border-radius:0}
+.checklist li.done::before{background:var(--green);border-color:var(--green)}
+.next-lesson{background:var(--paper);border:2px solid var(--ink);padding:24px;display:flex;align-items:center;justify-content:space-between;margin-top:60px;text-decoration:none;transition:all 0.15s}
+.next-lesson:hover{background:var(--ink)}
+.next-lesson:hover .next-title,.next-lesson:hover .next-label,.next-lesson:hover .next-arrow{color:#fff}
+.next-label{font-family:var(--sans);font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.next-title{font-family:var(--sans);font-size:19px;font-weight:700;color:var(--ink)}
+.next-arrow{font-size:24px;color:var(--accent)}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-brand">nano<span>Llama</span></div>
+  <div class="nav-lessons">
+    <a href="lesson-01.html" class="done">01</a><a href="lesson-02.html" class="done">02</a>
+    <a href="lesson-03.html" class="done">03</a><a href="lesson-04.html" class="done">04</a>
+    <a href="lesson-05.html" class="done">05</a><a href="lesson-06.html" class="done">06</a>
+    <a href="lesson-07.html" class="done">07</a><a href="lesson-08.html" class="done">08</a>
+    <a href="lesson-09.html" class="active">09</a>
+    <a href="lesson-10.html">10</a>
+    <a href="#">11</a><a href="#">12</a><a href="#">13</a><a href="#">14</a><a href="#">15</a>
+  </div>
+  <div class="nav-right">CPU Only</div>
+</nav>
+<div class="hero">
+  <div class="badge">Lesson 09 / 15</div>
+  <h1>Positional<br>Encoding:<br><em>RoPE</em></h1>
+  <div class="hero-meta"><span>80 min</span><span>Geometry + Rotations</span><span>CPU</span></div>
+  <p class="hero-desc">Attention is permutation-invariant — without positional information, "the cat sat" and "sat cat the" look identical. <strong>RoPE (Rotary Position Embedding)</strong> elegantly encodes position by rotating Q and K vectors. Used in Llama, Mistral, GPT-NeoX — it's the modern standard.</p>
+</div>
+<div class="main">
+
+  <div class="section">
+    <h2>The Position Problem</h2>
+    <p>Look at self-attention: <code>scores = Q @ K.T</code>. This is a dot product — it measures similarity. But there's no position information in Q or K! Token 1 and token 50 contribute identically to the attention scores regardless of where they sit in the sequence.</p>
+    <p>We need to <strong>inject position</strong>. Original transformers add sinusoidal signals to the embeddings. Llama uses RoPE — a more elegant approach that modifies Q and K directly using rotation matrices.</p>
+
+    <div class="concept">
+      <div class="concept-title">The Key Insight of RoPE</div>
+      <p>RoPE rotates the Q and K vectors by an angle proportional to their position. When you take the dot product of two rotated vectors, the result depends only on the <em>relative</em> distance between them — not their absolute positions. This is exactly what we want: "how far apart are these tokens?" not "what absolute positions are they at?".</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>How RoPE Works: The Rotation Idea</h2>
+    <p>RoPE works in 2D pairs of dimensions. For a d_head=16 vector, we form 8 pairs: (dim0,dim1), (dim2,dim3), ..., (dim14,dim15). Each pair is rotated by angle θ * position, where θ is different for each pair (lower frequency for higher dimension pairs).</p>
+
+    <div class="rope-diagram">
+      <div class="rope-title">Pair-wise rotation by position angle</div>
+      <div class="rope-row">
+        <div class="rope-token">Token 0<br><span style="font-size:10px;color:var(--muted)">pos=0</span></div>
+        <div class="rope-arrow">Q dims:</div>
+        <div class="rope-vec">
+          <div class="rope-pair"><div class="rp-a">0.8</div><div class="rp-b">0.3</div></div>
+          <div class="rope-pair"><div class="rp-a">-0.4</div><div class="rp-b">0.9</div></div>
+          <div class="rope-pair"><div class="rp-a">0.1</div><div class="rp-b">0.7</div></div>
+          <div class="rope-pair"><div class="rp-a">0.5</div><div class="rp-b">-0.2</div></div>
+        </div>
+        <div class="rope-pos">rotate by 0*theta (no change)</div>
+      </div>
+      <div class="rope-row">
+        <div class="rope-token">Token 3<br><span style="font-size:10px;color:var(--muted)">pos=3</span></div>
+        <div class="rope-arrow">Q dims:</div>
+        <div class="rope-vec">
+          <div class="rope-pair"><div class="rp-a" style="background:#ffe8d8">0.3</div><div class="rp-b" style="background:#d8e8ff">-0.8</div></div>
+          <div class="rope-pair"><div class="rp-a" style="background:#ffe8d8">0.8</div><div class="rp-b" style="background:#d8e8ff">0.5</div></div>
+          <div class="rope-pair"><div class="rp-a" style="background:#ffe0d0">0.2</div><div class="rp-b" style="background:#d0e0ff">0.6</div></div>
+          <div class="rope-pair"><div class="rp-a" style="background:#ffd8c8">0.4</div><div class="rp-b" style="background:#c8d8ff">-0.6</div></div>
+        </div>
+        <div class="rope-pos">rotate by 3*theta (significant change)</div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:10px">Each 2D pair (red, blue) is rotated as a 2D vector. Position encodes into the rotation angle.</div>
+    </div>
+
+    <div class="math-box">
+      <div class="eq">RoPE(q, pos) = [ q_{2i}·cos(pos·θᵢ) - q_{2i+1}·sin(pos·θᵢ),   q_{2i}·sin(pos·θᵢ) + q_{2i+1}·cos(pos·θᵢ) ]</div>
+      <div class="explain">θᵢ = 1 / (base^(2i/d_head))  where base=10000. Higher i = lower frequency = slower rotation.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Implementing RoPE from Scratch</h2>
+    <div class="code-block">
+      <div class="code-header"><div class="code-title">rope.py — rotary position embedding</div><div class="code-label">FINAL CODE</div></div>
+<pre><span class="kw">import</span> torch
+<span class="kw">import</span> torch.nn <span class="kw">as</span> nn
+
+<span class="kw">class</span> <span class="cl">RotaryPositionEmbedding</span>(nn.Module):
+    <span class="st">"""
+    RoPE: Rotary Position Embedding (Su et al., 2021).
+    Used in Llama, Mistral, Falcon, etc.
+
+    Rotates Q and K by position-dependent angles before attention.
+    The dot product Q_rotated . K_rotated depends only on relative position.
+    No added parameters -- purely positional geometry!
+    """</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, d_head: <span class="fn">int</span>, max_seq_len: <span class="fn">int</span> <span class="op">=</span> <span class="nm">512</span>, base: <span class="fn">int</span> <span class="op">=</span> <span class="nm">10000</span>):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        <span class="kw">assert</span> d_head <span class="op">%</span> <span class="nm">2</span> <span class="op">==</span> <span class="nm">0</span>, <span class="st">"d_head must be even for RoPE pairs"</span>
+
+        <span class="cm"># Compute theta frequencies for each pair of dimensions
+        # theta_i = 1 / (base^(2i/d_head))  for i in range(d_head//2)</span>
+        i      <span class="op">=</span> torch.<span class="fn">arange</span>(<span class="nm">0</span>, d_head, <span class="nm">2</span>).<span class="fn">float</span>()   <span class="cm"># [0, 2, 4, ..., d_head-2]</span>
+        thetas <span class="op">=</span> <span class="nm">1.0</span> <span class="op">/</span> (base <span class="op">**</span> (i <span class="op">/</span> d_head))            <span class="cm"># [d_head/2] frequencies</span>
+
+        <span class="cm"># Precompute cos and sin for all positions up to max_seq_len
+        # positions: [max_seq_len], thetas: [d_head/2]
+        # outer product: [max_seq_len, d_head/2]</span>
+        positions <span class="op">=</span> torch.<span class="fn">arange</span>(max_seq_len).<span class="fn">float</span>()       <span class="cm"># [max_seq_len]</span>
+        angles    <span class="op">=</span> torch.<span class="fn">outer</span>(positions, thetas)          <span class="cm"># [max_seq_len, d_head/2]</span>
+
+        <span class="cm"># cos and sin tables -- register as buffers (not parameters, no grad)</span>
+        self.<span class="fn">register_buffer</span>(<span class="st">'cos'</span>, angles.<span class="fn">cos</span>())    <span class="cm"># [max_seq_len, d_head/2]</span>
+        self.<span class="fn">register_buffer</span>(<span class="st">'sin'</span>, angles.<span class="fn">sin</span>())    <span class="cm"># [max_seq_len, d_head/2]</span>
+
+    <span class="kw">def</span> <span class="fn">_rotate</span>(self, x: torch.<span class="cl">Tensor</span>, seq_len: <span class="fn">int</span>) <span class="op">-&gt;</span> torch.<span class="cl">Tensor</span>:
+        <span class="st">"""Apply rotation to tensor x. x: (B, H, S, d_head)"""</span>
+        <span class="cm"># Get cos/sin for this sequence length: [S, d_head/2]</span>
+        cos <span class="op">=</span> self.cos[:seq_len]   <span class="cm"># [S, d_head/2]</span>
+        sin <span class="op">=</span> self.sin[:seq_len]   <span class="cm"># [S, d_head/2]</span>
+
+        <span class="cm"># Reshape cos/sin for broadcasting with x: [1, 1, S, d_head/2]</span>
+        cos <span class="op">=</span> cos.<span class="fn">unsqueeze</span>(<span class="nm">0</span>).<span class="fn">unsqueeze</span>(<span class="nm">0</span>)   <span class="cm"># [1, 1, S, d_head/2]</span>
+        sin <span class="op">=</span> sin.<span class="fn">unsqueeze</span>(<span class="nm">0</span>).<span class="fn">unsqueeze</span>(<span class="nm">0</span>)   <span class="cm"># [1, 1, S, d_head/2]</span>
+
+        <span class="cm"># Split x into even and odd dimensions
+        # x[..., 0::2]: dims 0, 2, 4, ... (first of each pair)
+        # x[..., 1::2]: dims 1, 3, 5, ... (second of each pair)</span>
+        x_even <span class="op">=</span> x[<span class="op">...</span>, <span class="nm">0</span>::<span class="nm">2</span>]   <span class="cm"># (B, H, S, d_head/2)</span>
+        x_odd  <span class="op">=</span> x[<span class="op">...</span>, <span class="nm">1</span>::<span class="nm">2</span>]   <span class="cm"># (B, H, S, d_head/2)</span>
+
+        <span class="cm"># Apply 2D rotation to each pair:
+        # [cos  -sin] [x_even]   [x_even*cos - x_odd*sin]
+        # [sin   cos] [x_odd ] = [x_even*sin + x_odd*cos]</span>
+        new_even <span class="op">=</span> x_even <span class="op">*</span> cos <span class="op">-</span> x_odd <span class="op">*</span> sin
+        new_odd  <span class="op">=</span> x_even <span class="op">*</span> sin <span class="op">+</span> x_odd <span class="op">*</span> cos
+
+        <span class="cm"># Interleave back: [new_even_0, new_odd_0, new_even_1, new_odd_1, ...]</span>
+        x_rotated <span class="op">=</span> torch.<span class="fn">stack</span>([new_even, new_odd], dim<span class="op">=-</span><span class="nm">1</span>).<span class="fn">flatten</span>(<span class="op">-</span><span class="nm">2</span>)
+        <span class="kw">return</span> x_rotated   <span class="cm"># (B, H, S, d_head) -- same shape!</span>
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, q: torch.<span class="cl">Tensor</span>, k: torch.<span class="cl">Tensor</span>):
+        <span class="st">"""Apply RoPE to both Q and K. q,k: (B, H, S, d_head)"""</span>
+        S <span class="op">=</span> q.shape[<span class="nm">2</span>]
+        <span class="kw">return</span> self.<span class="fn">_rotate</span>(q, S), self.<span class="fn">_rotate</span>(k, S)
+
+<span class="cm"># Test</span>
+rope <span class="op">=</span> <span class="cl">RotaryPositionEmbedding</span>(d_head<span class="op">=</span><span class="nm">16</span>, max_seq_len<span class="op">=</span><span class="nm">128</span>)
+q    <span class="op">=</span> torch.<span class="fn">randn</span>(<span class="nm">4</span>, <span class="nm">4</span>, <span class="nm">64</span>, <span class="nm">16</span>)   <span class="cm"># (B, H, S, d_head)</span>
+k    <span class="op">=</span> torch.<span class="fn">randn</span>(<span class="nm">4</span>, <span class="nm">4</span>, <span class="nm">64</span>, <span class="nm">16</span>)
+
+q_rot, k_rot <span class="op">=</span> rope(q, k)
+<span class="fn">print</span>(q_rot.shape)   <span class="cm"># [4, 4, 64, 16] -- same shape, just rotated!</span>
+
+<span class="cm"># Verify: rotation preserves vector magnitude (it's a rotation, not a scale)</span>
+<span class="fn">print</span>(torch.<span class="fn">allclose</span>(q.<span class="fn">norm</span>(dim<span class="op">=-</span><span class="nm">1</span>), q_rot.<span class="fn">norm</span>(dim<span class="op">=-</span><span class="nm">1</span>), atol<span class="op">=</span><span class="nm">1e-5</span>))  <span class="cm"># True!</span>
+<span class="cm"># Rotation is length-preserving -- good! No scale distortion.</span></pre>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Integrating RoPE into MultiHeadAttention</h2>
+    <div class="code-block">
+      <div class="code-header"><div class="code-title">mha_with_rope.py — updated MHA</div><div class="code-label">INTEGRATION</div></div>
+<pre><span class="kw">class</span> <span class="cl">MultiHeadAttentionWithRoPE</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, d_model, n_heads, max_seq_len<span class="op">=</span><span class="nm">512</span>):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        self.d_model <span class="op">=</span> d_model
+        self.n_heads <span class="op">=</span> n_heads
+        self.d_head  <span class="op">=</span> d_model <span class="op">//</span> n_heads
+        self.scale   <span class="op">=</span> math.<span class="fn">sqrt</span>(self.d_head)
+
+        self.qkv_proj <span class="op">=</span> nn.<span class="cl">Linear</span>(d_model, <span class="nm">3</span><span class="op">*</span>d_model, bias<span class="op">=</span><span class="kw">False</span>)
+        self.out_proj <span class="op">=</span> nn.<span class="cl">Linear</span>(d_model, d_model, bias<span class="op">=</span><span class="kw">False</span>)
+
+        <span class="cm"># RoPE is not a parameter -- no weights, just precomputed rotation tables</span>
+        self.rope <span class="op">=</span> <span class="cl">RotaryPositionEmbedding</span>(self.d_head, max_seq_len)
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x):
+        B, S, D <span class="op">=</span> x.shape
+        q, k, v <span class="op">=</span> self.<span class="fn">qkv_proj</span>(x).<span class="fn">chunk</span>(<span class="nm">3</span>, dim<span class="op">=-</span><span class="nm">1</span>)
+
+        <span class="cm"># Reshape to (B, H, S, d_head)</span>
+        <span class="kw">def</span> <span class="fn">split_heads</span>(t):
+            <span class="kw">return</span> t.<span class="fn">view</span>(B, S, self.n_heads, self.d_head).<span class="fn">transpose</span>(<span class="nm">1</span>, <span class="nm">2</span>)
+        q, k, v <span class="op">=</span> <span class="fn">split_heads</span>(q), <span class="fn">split_heads</span>(k), <span class="fn">split_heads</span>(v)
+
+        <span class="cm"># === Apply RoPE to Q and K ONLY (not V) ===
+        # V doesn't need position -- it's the content being aggregated</span>
+        q, k <span class="op">=</span> self.<span class="fn">rope</span>(q, k)
+
+        <span class="cm"># Attention computation (same as before)</span>
+        scores <span class="op">=</span> (q <span class="op">@</span> k.<span class="fn">transpose</span>(<span class="op">-</span><span class="nm">2</span>, <span class="op">-</span><span class="nm">1</span>)) <span class="op">/</span> self.scale
+        mask   <span class="op">=</span> torch.<span class="fn">triu</span>(torch.<span class="fn">ones</span>(S, S, device<span class="op">=</span>x.device, dtype<span class="op">=</span>torch.bool), diagonal<span class="op">=</span><span class="nm">1</span>)
+        scores <span class="op">=</span> scores.<span class="fn">masked_fill</span>(mask, <span class="fn">float</span>(<span class="st">'-inf'</span>))
+        attn   <span class="op">=</span> F.<span class="fn">softmax</span>(scores, dim<span class="op">=-</span><span class="nm">1</span>)
+        out    <span class="op">=</span> attn <span class="op">@</span> v
+        out    <span class="op">=</span> out.<span class="fn">transpose</span>(<span class="nm">1</span>, <span class="nm">2</span>).<span class="fn">contiguous</span>().<span class="fn">view</span>(B, S, D)
+        <span class="kw">return</span> self.<span class="fn">out_proj</span>(out)
+
+<span class="cm"># Test</span>
+mha <span class="op">=</span> <span class="cl">MultiHeadAttentionWithRoPE</span>(<span class="nm">64</span>, <span class="nm">4</span>)
+x   <span class="op">=</span> torch.<span class="fn">randn</span>(<span class="nm">4</span>, <span class="nm">64</span>, <span class="nm">64</span>)
+<span class="fn">print</span>(mha(x).shape)   <span class="cm"># [4, 64, 64]</span>
+<span class="cm"># RoPE adds 0 learnable parameters -- purely geometric!</span></pre>
+    </div>
+
+    <div class="callout good">
+      <div class="callout-icon">&#10003;</div>
+      <div class="callout-text"><strong>RoPE adds zero parameters.</strong> It's purely mathematical — precomputed rotation tables stored as buffers (not trained). The position information comes for free from the geometry. This is one of RoPE's key advantages over learned positional embeddings.</div>
+    </div>
+
+    <div class="callout warn">
+      <div class="callout-icon">&#9888;</div>
+      <div class="callout-text"><strong>Apply RoPE to Q and K only, not V.</strong> The Value tensor represents content being aggregated — it doesn't need positional rotation. Applying RoPE to V would distort the content and hurt performance. This is a common implementation mistake.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>What You Now Know</h2>
+    <ul class="checklist">
+      <li class="done">Attention is position-invariant without explicit positional encoding</li>
+      <li class="done">RoPE rotates Q and K by position-dependent angles in 2D pairs</li>
+      <li class="done">The dot product of rotated Q and K encodes relative position</li>
+      <li class="done">RoPE has zero learnable parameters — purely geometric</li>
+      <li class="done">Apply RoPE to Q and K only, never to V</li>
+      <li>How do all pieces assemble into the complete nanoLlama? (next lesson!)</li>
+    </ul>
+  </div>
+
+  <a href="lesson-10.html" class="next-lesson">
+    <div><div class="next-label">Next Lesson — The Complete Model</div><div class="next-title">Lesson 10 — Full nanoLlama Architecture</div></div>
+    <div class="next-arrow">&#8594;</div>
+  </a>
+</div>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 14 - Text Generation & Inference | nanoLlama</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Fraunces:ital,wght@0,300;0,700;0,900;1,300;1,700&display=swap" rel="stylesheet">
+<style>:root{
+  --bg:#09080d;--paper:#10101a;--border:#1c1c2e;
+  --accent:#c084fc;--accent2:#f472b6;--accent3:#818cf8;
+  --text:#f0f0f0;--muted:#404060;
+  --mono:'JetBrains Mono',monospace;--serif:'Fraunces',serif;
+  --done-border:#1c1c2e;--done-color:#404060;
+  --desc-color:#c084fc88;
+  --prose:#c084fc99;
+  --code-bg:#09080d;
+  --fn-color:#c084fc;--cm-color:#1c1c2e;--op-color:#404060;
+  --call-info:#1c1c2e;--call-warn:#302010;--call-key:#0a2820;
+  
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--mono);font-size:14px;line-height:1.7;min-height:100vh;background:var(--bg);color:var(--text)}
+nav{background:var(--paper);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-brand{font-family:var(--serif);font-size:18px;font-weight:900;color:var(--accent);letter-spacing:-0.02em}
+.nav-brand span{color:var(--text);font-weight:300}
+.nav-lessons{display:flex;gap:4px}
+.nav-lessons a{display:flex;align-items:center;justify-content:center;width:28px;height:28px;font-size:10px;border:1px solid var(--border);color:var(--muted);text-decoration:none;transition:all 0.15s}
+.nav-lessons a.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700}
+.nav-lessons a.done{border-color:var(--done-border);color:var(--done-color)}
+.nav-lessons a:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+.nav-right{font-size:11px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase}
+.hero{padding:64px 32px 48px;max-width:920px;margin:0 auto}
+.lesson-badge{display:inline-flex;align-items:center;gap:8px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:20px}
+.lesson-badge::before{content:'';width:24px;height:1px;background:var(--accent)}
+h1{font-family:var(--serif);font-size:clamp(32px,5vw,52px);font-weight:900;line-height:1.05;letter-spacing:-0.03em;margin-bottom:16px}
+h1 em{font-style:italic;color:var(--accent)}
+.hero-meta{display:flex;gap:20px;font-size:11px;color:var(--muted);margin-bottom:32px}
+.hero-desc{font-size:15px;line-height:1.8;color:var(--desc-color);max-width:680px;border-left:2px solid var(--accent);padding-left:20px}
+.main{max-width:920px;margin:0 auto;padding:0 32px 80px}
+.section{margin-bottom:56px}
+h2{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--text);margin-bottom:20px;display:flex;align-items:center;gap:12px}
+h2::after{content:'';flex:1;height:1px;background:var(--border)}
+h3{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:0.08em;text-transform:uppercase;margin:24px 0 10px}
+p{color:var(--prose);line-height:1.8;margin-bottom:14px}
+p strong{color:var(--text);font-weight:500}
+code{background:var(--code-bg);padding:2px 6px;color:var(--accent);font-size:12px}
+.code-block{background:var(--code-bg);border:1px solid var(--border);border-left:3px solid var(--accent);margin:20px 0;overflow:hidden}
+.code-header{background:var(--paper);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.code-title{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+.code-label{font-size:10px;padding:2px 8px;background:var(--accent);color:#000;font-weight:700}
+pre{padding:20px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7}
+.kw{color:#93c5fd}.fn{color:var(--fn-color)}.st{color:#fde68a}.cm{color:var(--cm-color);font-style:italic}.nm{color:var(--accent)}.cl{color:#f9a8d4}.op{color:var(--op-color)}
+.concept{background:var(--paper);border:1px solid var(--border);padding:20px 24px;margin:20px 0}
+.concept-title{font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent2);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.concept-title::before{content:'◆';font-size:8px}
+.concept p{margin:0;font-size:13px;color:var(--prose)}
+.callout{display:flex;gap:16px;padding:16px 20px;margin:20px 0;border:1px solid}
+.callout.info{border-color:var(--call-info);background:var(--bg)}
+.callout.warning{border-color:var(--call-warn);background:var(--bg)}
+.callout.key{border-color:var(--call-key);background:var(--bg)}
+.callout-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.callout-text{font-size:12px;line-height:1.7;color:var(--prose)}
+.callout-text strong{color:var(--text)}
+.checklist{list-style:none;margin:16px 0}
+.checklist li{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--prose)}
+.checklist li:last-child{border-bottom:none}
+.checklist li::before{content:'○';color:var(--muted);flex-shrink:0}
+.checklist li.done::before{content:'●';color:var(--accent3)}
+.next-lesson{background:var(--paper);border:1px solid var(--border);padding:28px;display:flex;align-items:center;justify-content:space-between;margin-top:64px;text-decoration:none}
+.next-lesson:hover{border-color:var(--accent)}
+.next-label{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.next-title{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--text)}
+.next-arrow{font-size:24px;color:var(--accent)}
+</style>
+</head>
+<body>
+<nav><div class="nav-brand">nano<span>Llama</span></div><div class="nav-lessons"><a href="lesson-01.html" class="done">01</a><a href="lesson-02.html" class="done">02</a><a href="lesson-03.html" class="done">03</a><a href="lesson-04.html" class="done">04</a><a href="lesson-05.html" class="done">05</a><a href="lesson-06.html" class="done">06</a><a href="lesson-07.html" class="done">07</a><a href="lesson-08.html" class="done">08</a><a href="lesson-09.html" class="done">09</a><a href="lesson-10.html" class="done">10</a><a href="lesson-11.html" class="done">11</a><a href="lesson-12.html" class="done">12</a><a href="lesson-13.html" class="done">13</a><a href="lesson-14.html" class="active">14</a><a href="lesson-15.html" class="">15</a></div><div class="nav-right">CPU · Pure PyTorch</div></nav>
+
+<div class="hero">
+  <div class="lesson-badge">Lesson 14 of 15</div>
+  <h1>Text Generation<br>&amp; <em>Inference</em></h1>
+  <div class="hero-meta"><span>⏱ ~60 min</span><span>✍️ Sampling Strategies</span><span>💻 CPU only</span></div>
+  <p class="hero-desc">The model is trained. Now we make it write. Inference is <strong>an autoregressive loop</strong>: feed a prompt, get a next-token distribution, sample from it, append the token, repeat. We implement greedy, temperature, and top-k sampling - each producing very different text.</p>
+</div>
+<div class="main">
+
+<div class="section">
+<h2>The Autoregressive Generation Loop</h2>
+<p>Language models don't generate whole sentences at once. They generate <strong>one token at a time</strong>, feeding each new token back as input for the next step. This is "autoregressive" - each output depends on all previous outputs.</p>
+<div class="code-block">
+<div class="code-header"><div class="code-title">generation_loop.py - the core inference loop</div><div class="code-label">CORE CODE</div></div>
+<pre><span class="kw">import</span> torch
+<span class="kw">import</span> torch.nn.functional <span class="kw">as</span> F
+
+<span class="kw">def</span> <span class="fn">generate</span>(
+    model,
+    prompt_ids:   torch.<span class="cl">Tensor</span>,   <span class="cm"># [1, prompt_len] - encoded prompt</span>
+    max_new_tokens: <span class="fn">int</span> <span class="op">=</span> <span class="nm">200</span>,
+    temperature:  <span class="fn">float</span> <span class="op">=</span> <span class="nm">0.8</span>,
+    top_k:        <span class="fn">int</span> <span class="op">=</span> <span class="nm">40</span>,
+) <span class="op">-&gt;</span> torch.<span class="cl">Tensor</span>:
+    <span class="st">&quot;&quot;&quot;
+    Generate tokens autoregressively.
+
+    temperature=0.0: greedy (always pick highest-prob token)
+    temperature=1.0: sample from raw distribution
+    temperature>1.0: more random  |  <1.0: more conservative
+    top_k: restrict sampling to top-k tokens only
+    &quot;&quot;&quot;</span>
+    model.<span class="fn">eval</span>()
+    generated <span class="op">=</span> prompt_ids.<span class="fn">clone</span>()  <span class="cm"># start with prompt</span>
+
+    <span class="kw">with</span> torch.<span class="fn">no_grad</span>():
+        <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(max_new_tokens):
+            <span class="cm"># Truncate to max_seq_len (context window)</span>
+            ctx <span class="op">=</span> generated[:, <span class="op">-</span>model.cfg.max_seq_len:]
+
+            <span class="cm"># Forward pass - we only care about the LAST position's logits</span>
+            logits <span class="op">=</span> model(ctx)            <span class="cm"># [1, seq_len, vocab]</span>
+            logits <span class="op">=</span> logits[:, <span class="op">-</span><span class="nm">1</span>, :]    <span class="cm"># [1, vocab] ← last position only</span>
+
+            <span class="cm"># ── Sampling strategy ────────────────────────────────</span>
+            <span class="kw">if</span> temperature <span class="op">==</span> <span class="nm">0.0</span>:
+                <span class="cm"># Greedy: always pick most likely token</span>
+                next_id <span class="op">=</span> logits.<span class="fn">argmax</span>(dim<span class="op">=-</span><span class="nm">1</span>, keepdim<span class="op">=</span><span class="kw">True</span>)
+            <span class="kw">else</span>:
+                <span class="cm"># Temperature: scale logits before softmax
+                # Low T → sharper distribution → more predictable
+                # High T → flatter distribution → more creative/random</span>
+                logits <span class="op">=</span> logits <span class="op">/</span> temperature
+
+                <span class="cm"># Top-k: zero out all but top k logits</span>
+                <span class="kw">if</span> top_k <span class="op">&gt;</span> <span class="nm">0</span>:
+                    top_vals, _ <span class="op">=</span> torch.<span class="fn">topk</span>(logits, top_k, dim<span class="op">=-</span><span class="nm">1</span>)
+                    threshold   <span class="op">=</span> top_vals[:, <span class="op">-</span><span class="nm">1</span>].<span class="fn">unsqueeze</span>(<span class="nm">1</span>)
+                    logits <span class="op">=</span> logits.<span class="fn">masked_fill</span>(logits <span class="op">&lt;</span> threshold, <span class="fn">float</span>(<span class="st">'-inf'</span>))
+
+                <span class="cm"># Sample from the filtered distribution</span>
+                probs   <span class="op">=</span> F.<span class="fn">softmax</span>(logits, dim<span class="op">=-</span><span class="nm">1</span>)
+                next_id <span class="op">=</span> torch.<span class="fn">multinomial</span>(probs, num_samples<span class="op">=</span><span class="nm">1</span>)
+
+            <span class="cm"># Append to sequence and continue</span>
+            generated <span class="op">=</span> torch.<span class="fn">cat</span>([generated, next_id], dim<span class="op">=</span><span class="nm">1</span>)
+
+    <span class="kw">return</span> generated</pre>
+</div>
+</div>
+
+<div class="section">
+<h2>Temperature & Top-k: What They Do</h2>
+<div class="code-block">
+<div class="code-header"><div class="code-title">sampling_effects.py - compare strategies on a fixed state</div><div class="code-label">INSIGHT</div></div>
+<pre><span class="kw">import</span> torch
+<span class="kw">import</span> torch.nn.functional <span class="kw">as</span> F
+
+<span class="cm"># Suppose the model's top logits for the next token after "To be or not":</span>
+logits <span class="op">=</span> torch.<span class="fn">tensor</span>([<span class="nm">4.2</span>, <span class="nm">3.1</span>, <span class="nm">2.8</span>, <span class="nm">1.0</span>, <span class="op">-</span><span class="nm">0.5</span>])  <span class="cm"># top 5 tokens</span>
+tokens <span class="op">=</span> [<span class="st">"to"</span>, <span class="st">"not"</span>, <span class="st">"be"</span>, <span class="st">"or"</span>, <span class="st">"that"</span>]
+
+<span class="cm"># T=0.0 (greedy) - always picks "to"</span>
+<span class="fn">print</span>(<span class="st">"Greedy:"</span>, tokens[logits.<span class="fn">argmax</span>().<span class="fn">item</span>()])  <span class="cm"># "to"</span>
+
+<span class="cm"># T=1.0 (raw) - sample from original distribution</span>
+probs_raw <span class="op">=</span> F.<span class="fn">softmax</span>(logits <span class="op">/</span> <span class="nm">1.0</span>, dim<span class="op">=-</span><span class="nm">1</span>)
+<span class="fn">print</span>(<span class="st">"T=1.0 probs:"</span>, [<span class="st">f"{p:.2f}"</span> <span class="kw">for</span> p <span class="kw">in</span> probs_raw.<span class="fn">tolist</span>()])
+<span class="cm"># ['0.46', '0.17', '0.12', '0.10', '0.06']  ← "to" likely but not certain</span>
+
+<span class="cm"># T=0.5 (sharper) - more confident, less random</span>
+probs_low <span class="op">=</span> F.<span class="fn">softmax</span>(logits <span class="op">/</span> <span class="nm">0.5</span>, dim<span class="op">=-</span><span class="nm">1</span>)
+<span class="fn">print</span>(<span class="st">"T=0.5 probs:"</span>, [<span class="st">f"{p:.2f}"</span> <span class="kw">for</span> p <span class="kw">in</span> probs_low.<span class="fn">tolist</span>()])
+<span class="cm"># ['0.72', '0.12', 0.08', '0.05', '0.02']  ← much more peaked</span>
+
+<span class="cm"># T=2.0 (flatter) - more creative/random</span>
+probs_high <span class="op">=</span> F.<span class="fn">softmax</span>(logits <span class="op">/</span> <span class="nm">2.0</span>, dim<span class="op">=-</span><span class="nm">1</span>)
+<span class="fn">print</span>(<span class="st">"T=2.0 probs:"</span>, [<span class="st">f"{p:.2f}"</span> <span class="kw">for</span> p <span class="kw">in</span> probs_high.<span class="fn">tolist</span>()])
+<span class="cm"># ['0.29', '0.22', '0.20', '0.15', '0.10']  ← much flatter</span>
+
+<span class="cm"># Top-k = 3: only sample from "to", "not", "be" - ignore rest</span>
+top3_vals, top3_idx <span class="op">=</span> torch.<span class="fn">topk</span>(logits, <span class="nm">3</span>)
+<span class="fn">print</span>(<span class="st">"Top-3 tokens:"</span>, [tokens[i] <span class="kw">for</span> i <span class="kw">in</span> top3_idx.<span class="fn">tolist</span>()])  <span class="cm"># ["to","not","be"]</span></pre>
+</div>
+<div class="callout info">
+<div class="callout-icon">💡</div>
+<div class="callout-text"><strong>Good defaults for nanoLlama generation:</strong> temperature=0.8, top_k=40. Lower temperature → more coherent but repetitive. Higher → more surprising but incoherent. Greedy generation often loops: "the the the the..." - temperature + top_k breaks repetition loops naturally.</div>
+</div>
+</div>
+
+<div class="section">
+<h2>Full Inference Script</h2>
+<div class="code-block">
+<div class="code-header"><div class="code-title">infer.py - load checkpoint and generate text</div><div class="code-label">COMPLETE</div></div>
+<pre><span class="kw">import</span> torch
+<span class="kw">from</span> nanollama <span class="kw">import</span> NanoLlama, NanoLlamaConfig
+
+<span class="cm"># Load trained model</span>
+checkpoint <span class="op">=</span> torch.<span class="fn">load</span>(<span class="st">'best.pt'</span>, map_location<span class="op">=</span><span class="st">'cpu'</span>)
+cfg   <span class="op">=</span> checkpoint[<span class="st">'cfg'</span>]
+model <span class="op">=</span> <span class="cl">NanoLlama</span>(cfg)
+model.<span class="fn">load_state_dict</span>(checkpoint[<span class="st">'model'</span>])
+model.<span class="fn">eval</span>()
+
+<span class="cm"># Byte tokenizer (from Lesson 03)</span>
+<span class="kw">class</span> <span class="cl">ByteTokenizer</span>:
+    <span class="kw">def</span> <span class="fn">encode</span>(self, text): <span class="kw">return</span> <span class="fn">list</span>(text.<span class="fn">encode</span>(<span class="st">'utf-8'</span>))
+    <span class="kw">def</span> <span class="fn">decode</span>(self, ids):  <span class="kw">return</span> <span class="fn">bytes</span>(ids).<span class="fn">decode</span>(<span class="st">'utf-8'</span>, errors<span class="op">=</span><span class="st">'replace'</span>)
+
+tokenizer <span class="op">=</span> <span class="cl">ByteTokenizer</span>()
+
+<span class="cm"># Generate text from a prompt</span>
+prompt <span class="op">=</span> <span class="st">"HAMLET:
+"</span>
+ids    <span class="op">=</span> torch.<span class="fn">tensor</span>([tokenizer.<span class="fn">encode</span>(prompt)], dtype<span class="op">=</span>torch.<span class="fn">long</span>)
+
+output_ids <span class="op">=</span> <span class="fn">generate</span>(
+    model, ids,
+    max_new_tokens<span class="op">=</span><span class="nm">300</span>,
+    temperature<span class="op">=</span><span class="nm">0.8</span>,
+    top_k<span class="op">=</span><span class="nm">40</span>,
+)
+
+<span class="cm"># Decode only the new tokens (skip the prompt)</span>
+new_tokens <span class="op">=</span> output_ids[<span class="nm">0</span>, <span class="fn">len</span>(ids[<span class="nm">0</span>]):].<span class="fn">tolist</span>()
+<span class="fn">print</span>(prompt <span class="op">+</span> tokenizer.<span class="fn">decode</span>(new_tokens))
+
+<span class="cm"># Expected output after ~10 epochs on TinyShakespeare:
+#
+# HAMLET:
+# What means this, lord? I think we must speak
+# of this same thought to be the heart that loves thee,
+# And in the night, when all the world is done,
+# The duke is in the chamber of the king...
+#
+# Not perfect - but recognisably Shakespeare-like! The model
+# has learned: character names, blank verse rhythm, archaic
+# vocabulary, and dialogue structure. Not bad for 215K params.</span></pre>
+</div>
+</div>
+
+<div class="section">
+<h2>What You Now Know</h2>
+<ul class="checklist">
+<li class="done">Autoregressive generation: one token at a time, each fed back as input</li>
+<li class="done">Greedy (T=0): deterministic, often repetitive. Use temperature to add variety.</li>
+<li class="done">Temperature scales logits before softmax - lower = sharper, higher = flatter</li>
+<li class="done">Top-k restricts sampling to the k most likely tokens - prevents wild choices</li>
+<li class="done">Load checkpoints with torch.load + model.load_state_dict</li>
+</ul>
+</div>
+
+<a href="lesson-15.html" class="next-lesson"><div><div class="next-label">Next Lesson</div><div class="next-title">Lesson 15 - Full Run: Train & Talk to nanoLlama</div></div><div class="next-arrow">→</div></a>
+</div></body></html>

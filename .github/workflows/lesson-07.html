@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 07 — Feed-Forward Block & RMSNorm | nanoLlama</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#050810;--paper:#0a0f1a;--border:#141e2e;
+  --teal:#00d4aa;--orange:#ff6b35;--pink:#ff3d7f;--blue:#3d9eff;
+  --text:#c8dcea;--muted:#3a5060;
+  --mono:'Space Mono',monospace;--display:'Bebas Neue',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;line-height:1.75;min-height:100vh}
+nav{background:var(--paper);border-bottom:1px solid var(--border);padding:12px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-brand{font-family:var(--display);font-size:22px;color:var(--teal);letter-spacing:0.05em}
+.nav-brand span{color:var(--text)}
+.nav-lessons{display:flex;gap:3px}
+.nav-lessons a{display:flex;align-items:center;justify-content:center;width:26px;height:26px;font-size:9px;border:1px solid var(--border);color:var(--muted);text-decoration:none;transition:all 0.15s}
+.nav-lessons a.active{background:var(--teal);border-color:var(--teal);color:#000;font-weight:700}
+.nav-lessons a.done{border-color:#0a2a20;color:#1a6050}
+.nav-lessons a:hover:not(.active){border-color:var(--teal);color:var(--teal)}
+.nav-right{font-size:10px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase}
+.hero{padding:64px 36px 40px;max-width:880px;margin:0 auto}
+.badge{font-family:var(--display);font-size:13px;letter-spacing:0.2em;color:var(--teal);margin-bottom:12px}
+h1{font-family:var(--display);font-size:clamp(48px,7vw,88px);line-height:0.95;letter-spacing:0.03em;margin-bottom:16px;color:var(--text)}
+h1 em{color:var(--orange);font-style:normal}
+.hero-meta{display:flex;gap:20px;font-size:10px;color:var(--muted);margin-bottom:24px;letter-spacing:0.08em;text-transform:uppercase}
+.hero-desc{font-size:14px;line-height:1.8;color:#7aabb8;max-width:620px;border-left:2px solid var(--teal);padding-left:18px}
+.main{max-width:880px;margin:0 auto;padding:0 36px 80px}
+.section{margin-bottom:52px}
+h2{font-family:var(--display);font-size:32px;letter-spacing:0.05em;color:var(--text);margin-bottom:18px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+h3{font-size:11px;font-weight:700;color:var(--teal);letter-spacing:0.15em;text-transform:uppercase;margin:22px 0 10px}
+p{color:#7aabb8;line-height:1.8;margin-bottom:14px}
+p strong{color:var(--text);font-weight:700}
+code{background:#0a1820;padding:2px 6px;color:var(--teal);font-size:11px;border:1px solid var(--border)}
+.code-block{background:#040710;border:1px solid var(--border);border-left:3px solid var(--teal);margin:18px 0;overflow:hidden}
+.code-header{background:#07090f;padding:9px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.code-title{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+.code-label{font-size:9px;padding:2px 8px;background:var(--teal);color:#000;font-weight:700;letter-spacing:0.08em}
+pre{padding:18px;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.75;color:#c8dcea}
+.kw{color:#ff6b35}.fn{color:#00d4aa}.st{color:#a8e890}.cm{color:#1a3040;font-style:italic}.nm{color:#3d9eff}.cl{color:#ff3d7f}.op{color:#3a5060}
+.concept{background:var(--paper);border:1px solid;border-color:var(--teal);padding:18px 22px;margin:18px 0}
+.concept-title{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--teal);margin-bottom:8px}
+.concept p{margin:0;font-size:12px;color:#5a8898}
+.callout{display:flex;gap:14px;padding:14px 18px;margin:18px 0;border:1px solid}
+.callout.info{border-color:#0a2a4a;background:#030810}
+.callout.warn{border-color:#3a2a00;background:#0a0800}
+.callout.good{border-color:#0a3a28;background:#020a06}
+.callout-icon{font-size:14px;flex-shrink:0;margin-top:2px}
+.callout-text{font-size:11px;line-height:1.7;color:#5a8898}
+.callout-text strong{color:var(--text)}
+
+/* FFN DIAGRAM */
+.ffn-diagram{background:var(--paper);border:1px solid var(--border);padding:24px;margin:18px 0;font-size:12px}
+.ffn-title{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+.ffn-flow{display:flex;align-items:center;gap:0;overflow-x:auto;flex-wrap:wrap;row-gap:12px}
+.ffn-box{padding:10px 14px;border:1px solid;text-align:center;white-space:nowrap}
+.ffn-box.input{border-color:var(--blue);background:#030a18;color:var(--blue)}
+.ffn-box.up{border-color:var(--orange);background:#100800;color:var(--orange)}
+.ffn-box.gate{border-color:var(--pink);background:#100408;color:var(--pink)}
+.ffn-box.act{border-color:var(--teal);background:#030a08;color:var(--teal)}
+.ffn-box.down{border-color:var(--orange);background:#100800;color:var(--orange)}
+.ffn-box.output{border-color:var(--blue);background:#030a18;color:var(--blue)}
+.ffn-arrow{padding:0 8px;color:var(--muted);font-size:16px}
+.ffn-mul{padding:0 6px;color:var(--pink);font-size:18px;font-weight:700}
+.ffn-shape{font-size:9px;color:var(--muted);display:block;margin-top:4px}
+
+/* NORM DIAGRAM */
+.norm-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:2px;margin:18px 0}
+.norm-step{background:var(--paper);border:1px solid var(--border);padding:16px;font-size:11px}
+.ns-num{font-family:var(--display);font-size:24px;color:var(--teal);margin-bottom:6px}
+.ns-title{font-weight:700;color:var(--text);margin-bottom:4px;font-size:12px}
+.ns-desc{color:var(--muted);line-height:1.5}
+.ns-formula{background:#040710;border:1px solid var(--border);padding:8px;margin-top:8px;font-size:11px;color:var(--teal);text-align:center}
+
+.checklist{list-style:none;margin:14px 0}
+.checklist li{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;color:#5a8898}
+.checklist li:last-child{border-bottom:none}
+.checklist li::before{content:'';width:10px;height:10px;border:1px solid var(--muted);flex-shrink:0;margin-top:4px}
+.checklist li.done::before{background:var(--teal);border-color:var(--teal)}
+.next-lesson{background:var(--paper);border:1px solid var(--border);padding:24px;display:flex;align-items:center;justify-content:space-between;margin-top:60px;text-decoration:none;transition:border-color 0.15s}
+.next-lesson:hover{border-color:var(--teal)}
+.next-label{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.next-title{font-family:var(--display);font-size:20px;letter-spacing:0.05em;color:var(--text)}
+.next-arrow{font-size:24px;color:var(--teal)}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-brand">NANO<span>LLAMA</span></div>
+  <div class="nav-lessons">
+    <a href="lesson-01.html" class="done">01</a><a href="lesson-02.html" class="done">02</a>
+    <a href="lesson-03.html" class="done">03</a><a href="lesson-04.html" class="done">04</a>
+    <a href="lesson-05.html" class="done">05</a><a href="lesson-06.html" class="done">06</a>
+    <a href="lesson-07.html" class="active">07</a>
+    <a href="lesson-08.html">08</a><a href="lesson-09.html">09</a><a href="lesson-10.html">10</a>
+    <a href="#">11</a><a href="#">12</a><a href="#">13</a><a href="#">14</a><a href="#">15</a>
+  </div>
+  <div class="nav-right">CPU Only</div>
+</nav>
+<div class="hero">
+  <div class="badge">LESSON 07 / 15</div>
+  <h1>FEED-FORWARD<br>BLOCK &<br><em>RMSNORM</em></h1>
+  <div class="hero-meta"><span>75 min</span><span>MLP + Normalization</span><span>CPU</span></div>
+  <p class="hero-desc">Every transformer block has two sub-layers: attention (Lesson 06) and a <strong>feed-forward network (FFN)</strong>. The FFN is where the model stores and retrieves factual knowledge. Llama uses a special variant called <strong>SwiGLU</strong> plus <strong>RMSNorm</strong> instead of LayerNorm. We build both from scratch.</p>
+</div>
+<div class="main">
+
+  <div class="section">
+    <h2>THE FEED-FORWARD NETWORK</h2>
+    <p>After attention mixes information between tokens, the FFN processes each token <strong>independently</strong>. It applies the same MLP to every position — think of it as a per-token lookup in a learned knowledge store. Research has shown that factual associations ("Paris is the capital of France") are stored in FFN weights.</p>
+    <p>Standard transformers use two linear layers with a ReLU. <strong>Llama uses SwiGLU</strong> — a gated variant that consistently outperforms ReLU at the same parameter count. It has three weight matrices instead of two.</p>
+
+    <div class="ffn-diagram">
+      <div class="ffn-title">SwiGLU Feed-Forward Network — data flow</div>
+      <div class="ffn-flow">
+        <div class="ffn-box input">x<span class="ffn-shape">[B, S, 64]</span></div>
+        <div class="ffn-arrow">&#8594;</div>
+        <div>
+          <div class="ffn-box up">W_up · x<span class="ffn-shape">[B, S, 256]</span></div>
+          <div style="margin-top:4px" class="ffn-box gate">W_gate · x<span class="ffn-shape">[B, S, 256]</span></div>
+        </div>
+        <div class="ffn-arrow">&#8594;</div>
+        <div class="ffn-box act">SiLU(gate)<br>&#10005; up<span class="ffn-shape">[B, S, 256]</span></div>
+        <div class="ffn-arrow">&#8594;</div>
+        <div class="ffn-box down">W_down<span class="ffn-shape">[B, S, 64]</span></div>
+        <div class="ffn-arrow">&#8594;</div>
+        <div class="ffn-box output">output<span class="ffn-shape">[B, S, 64]</span></div>
+      </div>
+      <div style="margin-top:14px;font-size:11px;color:var(--muted)">hidden_dim = 4 * d_model = 256. Note: input and output shape identical!</div>
+    </div>
+
+    <div class="concept">
+      <div class="concept-title">What is SiLU?</div>
+      <p>SiLU (Sigmoid Linear Unit) = x * sigmoid(x). It's smooth, non-monotonic, and outputs non-zero for negative inputs unlike ReLU. The "gate" path controls how much of the "up" projection flows through — hence "gated". This learned gating mechanism is more expressive than a fixed activation.</p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><div class="code-title">swiglu_ffn.py</div><div class="code-label">CORE CODE</div></div>
+<pre><span class="kw">import</span> torch
+<span class="kw">import</span> torch.nn <span class="kw">as</span> nn
+<span class="kw">import</span> torch.nn.functional <span class="kw">as</span> F
+
+<span class="kw">class</span> <span class="cl">SwiGLUFFN</span>(nn.Module):
+    <span class="st">"""
+    SwiGLU Feed-Forward Network as used in Llama.
+    FFN(x) = W_down( SiLU(W_gate(x)) * W_up(x) )
+
+    Note: 3 weight matrices, not 2 like standard FFN.
+    hidden_dim is usually 4 * d_model (or 8/3 * d_model in some configs).
+    """</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, d_model: <span class="fn">int</span>, hidden_dim: <span class="fn">int</span>):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        <span class="cm"># W_up: projects input to hidden space</span>
+        self.w_up   <span class="op">=</span> nn.<span class="cl">Linear</span>(d_model, hidden_dim, bias<span class="op">=</span><span class="kw">False</span>)
+        <span class="cm"># W_gate: learned gate that controls information flow</span>
+        self.w_gate <span class="op">=</span> nn.<span class="cl">Linear</span>(d_model, hidden_dim, bias<span class="op">=</span><span class="kw">False</span>)
+        <span class="cm"># W_down: projects back to d_model</span>
+        self.w_down <span class="op">=</span> nn.<span class="cl">Linear</span>(hidden_dim, d_model, bias<span class="op">=</span><span class="kw">False</span>)
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x: torch.<span class="cl">Tensor</span>) <span class="op">-&gt;</span> torch.<span class="cl">Tensor</span>:
+        <span class="st">"""x: (B, S, d_model) -> (B, S, d_model)"""</span>
+        <span class="cm"># Compute gate and up projections in parallel</span>
+        gate <span class="op">=</span> self.<span class="fn">w_gate</span>(x)          <span class="cm"># (B, S, hidden_dim)</span>
+        up   <span class="op">=</span> self.<span class="fn">w_up</span>(x)            <span class="cm"># (B, S, hidden_dim)</span>
+
+        <span class="cm"># SwiGLU activation: gate signal controls how much of 'up' passes</span>
+        activated <span class="op">=</span> F.<span class="fn">silu</span>(gate) <span class="op">*</span> up   <span class="cm"># element-wise multiply (B, S, hidden_dim)</span>
+
+        <span class="cm"># Project back down to d_model</span>
+        <span class="kw">return</span> self.<span class="fn">w_down</span>(activated)   <span class="cm"># (B, S, d_model)</span>
+
+<span class="cm"># Understand SiLU vs ReLU</span>
+x <span class="op">=</span> torch.<span class="fn">linspace</span>(<span class="op">-</span><span class="nm">4</span>, <span class="nm">4</span>, <span class="nm">9</span>)
+<span class="fn">print</span>(<span class="st">"x:    "</span>, x.<span class="fn">tolist</span>())
+<span class="fn">print</span>(<span class="st">"ReLU: "</span>, F.<span class="fn">relu</span>(x).<span class="fn">tolist</span>())    <span class="cm"># 0 for x<0, else x (hard cutoff)</span>
+<span class="fn">print</span>(<span class="st">"SiLU: "</span>, F.<span class="fn">silu</span>(x).<span class="fn">round</span>(decimals<span class="op">=</span><span class="nm">2</span>).<span class="fn">tolist</span>())
+<span class="cm"># SiLU: slightly negative for small negatives, smooth, no hard cutoff</span>
+
+<span class="cm"># Test FFN</span>
+ffn <span class="op">=</span> <span class="cl">SwiGLUFFN</span>(d_model<span class="op">=</span><span class="nm">64</span>, hidden_dim<span class="op">=</span><span class="nm">256</span>)
+x   <span class="op">=</span> torch.<span class="fn">randn</span>(<span class="nm">4</span>, <span class="nm">64</span>, <span class="nm">64</span>)
+out <span class="op">=</span> ffn(x)
+<span class="fn">print</span>(out.shape)   <span class="cm"># [4, 64, 64] -- shape preserved!</span>
+
+params <span class="op">=</span> <span class="fn">sum</span>(p.<span class="fn">numel</span>() <span class="kw">for</span> p <span class="kw">in</span> ffn.<span class="fn">parameters</span>())
+<span class="fn">print</span>(<span class="st">f"FFN params: {params:,}"</span>)
+<span class="cm"># w_up:64*256 + w_gate:64*256 + w_down:256*64 = 49,152</span></pre>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>RMSNORM — SIMPLER THAN LAYERNORM</h2>
+    <p>Normalization layers stabilize training by keeping activations in a sane range. Standard transformers use LayerNorm. <strong>Llama uses RMSNorm</strong> — simpler, faster, and works just as well.</p>
+    <p>LayerNorm subtracts the mean AND divides by std. RMSNorm skips the mean subtraction — it only divides by the root mean square. One fewer operation, same effect.</p>
+
+    <div class="norm-steps">
+      <div class="norm-step">
+        <div class="ns-num">01</div>
+        <div class="ns-title">Compute RMS</div>
+        <div class="ns-desc">Root mean square of the input vector across the feature dimension</div>
+        <div class="ns-formula">rms = sqrt( mean(x²) + eps )</div>
+      </div>
+      <div class="norm-step">
+        <div class="ns-num">02</div>
+        <div class="ns-title">Normalize</div>
+        <div class="ns-desc">Divide each element by the RMS — now the vector has unit RMS</div>
+        <div class="ns-formula">x_norm = x / rms</div>
+      </div>
+      <div class="norm-step">
+        <div class="ns-num">03</div>
+        <div class="ns-title">Scale (gamma)</div>
+        <div class="ns-desc">Learnable per-feature scale — lets model undo normalization if needed</div>
+        <div class="ns-formula">output = gamma * x_norm</div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><div class="code-title">rmsnorm.py</div><div class="code-label">FINAL CODE</div></div>
+<pre><span class="kw">import</span> torch
+<span class="kw">import</span> torch.nn <span class="kw">as</span> nn
+
+<span class="kw">class</span> <span class="cl">RMSNorm</span>(nn.Module):
+    <span class="st">"""
+    Root Mean Square Normalization (used in Llama instead of LayerNorm).
+    Simpler: no mean subtraction, just divide by RMS and scale.
+    """</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, d_model: <span class="fn">int</span>, eps: <span class="fn">float</span> <span class="op">=</span> <span class="nm">1e-6</span>):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        self.eps   <span class="op">=</span> eps
+        <span class="cm"># Learnable scale parameter, initialized to ones</span>
+        self.gamma <span class="op">=</span> nn.<span class="cl">Parameter</span>(torch.<span class="fn">ones</span>(d_model))
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x: torch.<span class="cl">Tensor</span>) <span class="op">-&gt;</span> torch.<span class="cl">Tensor</span>:
+        <span class="st">"""x: (..., d_model) -> (..., d_model). Works on any leading dims."""</span>
+        <span class="cm"># Compute RMS along last dimension (d_model)</span>
+        <span class="cm"># x.pow(2).mean(-1): mean of squares along last dim -> (...,)</span>
+        <span class="cm"># keepdim=True: keep the last dim for broadcasting -> (..., 1)</span>
+        rms <span class="op">=</span> x.<span class="fn">pow</span>(<span class="nm">2</span>).<span class="fn">mean</span>(<span class="op">-</span><span class="nm">1</span>, keepdim<span class="op">=</span><span class="kw">True</span>).<span class="fn">add</span>(self.eps).<span class="fn">sqrt</span>()
+
+        <span class="cm"># Normalize and scale</span>
+        <span class="kw">return</span> self.gamma <span class="op">*</span> (x <span class="op">/</span> rms)
+
+<span class="cm"># Test</span>
+norm <span class="op">=</span> <span class="cl">RMSNorm</span>(<span class="nm">64</span>)
+x    <span class="op">=</span> torch.<span class="fn">randn</span>(<span class="nm">4</span>, <span class="nm">64</span>, <span class="nm">64</span>)   <span class="cm"># [B, S, d_model]</span>
+out  <span class="op">=</span> norm(x)
+<span class="fn">print</span>(out.shape)   <span class="cm"># [4, 64, 64] -- shape unchanged</span>
+
+<span class="cm"># Verify normalization: after RMSNorm, rms of each vector should be ~1</span>
+rms_after <span class="op">=</span> out.<span class="fn">pow</span>(<span class="nm">2</span>).<span class="fn">mean</span>(<span class="op">-</span><span class="nm">1</span>).<span class="fn">sqrt</span>()  <span class="cm"># [4, 64]</span>
+<span class="fn">print</span>(rms_after.<span class="fn">mean</span>().<span class="fn">item</span>())  <span class="cm"># ~1.0 (because gamma=ones initially)</span>
+
+<span class="cm"># Compare with LayerNorm (for reference -- we won't use it)</span>
+layer_norm <span class="op">=</span> nn.<span class="cl">LayerNorm</span>(<span class="nm">64</span>)
+out_ln     <span class="op">=</span> layer_norm(x)
+<span class="cm"># LayerNorm also subtracts the mean -- one more operation than RMSNorm
+# Llama paper shows RMSNorm is equally effective and faster</span>
+
+<span class="cm"># Why eps? Prevents division by zero when x is all zeros</span>
+zero_x <span class="op">=</span> torch.<span class="fn">zeros</span>(<span class="nm">1</span>, <span class="nm">1</span>, <span class="nm">64</span>)
+<span class="fn">print</span>(norm(zero_x).<span class="fn">sum</span>())  <span class="cm"># 0.0 (safe, no NaN)</span></pre>
+    </div>
+
+    <div class="callout good">
+      <div class="callout-icon">&#10003;</div>
+      <div class="callout-text"><strong>Where is RMSNorm applied?</strong> In Llama (pre-norm architecture), normalization is applied <em>before</em> each sub-layer (attention and FFN), not after. This is called "pre-norm" and trains more stably than the original "post-norm" transformer. We'll wire this in Lesson 08.</div>
+    </div>
+
+    <div class="callout warn">
+      <div class="callout-icon">&#9888;</div>
+      <div class="callout-text"><strong>eps matters.</strong> The 1e-6 epsilon prevents division by zero. In half-precision (fp16) training, use a larger eps like 1e-5 because fp16 underflows more easily. For our CPU float32 training, 1e-6 is fine.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>PARAMETER COUNT CHECK</h2>
+    <div class="code-block">
+      <div class="code-header"><div class="code-title">param_count.py</div><div class="code-label">CHECK</div></div>
+<pre><span class="cm"># nanoLlama per-block parameter count</span>
+d_model    <span class="op">=</span> <span class="nm">64</span>
+n_heads    <span class="op">=</span> <span class="nm">4</span>
+hidden_dim <span class="op">=</span> <span class="nm">256</span>   <span class="cm"># 4 * d_model</span>
+
+<span class="cm"># MultiHeadAttention</span>
+mha_params <span class="op">=</span> <span class="nm">3</span> <span class="op">*</span> d_model <span class="op">*</span> d_model <span class="op">+</span> d_model <span class="op">*</span> d_model
+<span class="cm"># qkv_proj:  3*64*64 = 12,288</span>
+<span class="cm"># out_proj:  64*64   =  4,096</span>
+<span class="cm"># total:             = 16,384</span>
+
+<span class="cm"># SwiGLUFFN</span>
+ffn_params <span class="op">=</span> <span class="nm">2</span> <span class="op">*</span> d_model <span class="op">*</span> hidden_dim <span class="op">+</span> hidden_dim <span class="op">*</span> d_model
+<span class="cm"># w_up:   64*256 = 16,384</span>
+<span class="cm"># w_gate: 64*256 = 16,384</span>
+<span class="cm"># w_down: 256*64 = 16,384</span>
+<span class="cm"># total:         = 49,152</span>
+
+<span class="cm"># RMSNorm (two of them per block)</span>
+norm_params <span class="op">=</span> <span class="nm">2</span> <span class="op">*</span> d_model   <span class="cm"># = 128</span>
+
+total_per_block <span class="op">=</span> mha_params <span class="op">+</span> ffn_params <span class="op">+</span> norm_params
+<span class="fn">print</span>(<span class="st">f"Per block: {total_per_block:,}"</span>)     <span class="cm"># 65,664</span>
+
+n_layers <span class="op">=</span> <span class="nm">4</span>
+<span class="fn">print</span>(<span class="st">f"All layers: {total_per_block*n_layers:,}"</span>)  <span class="cm"># 262,656</span>
+
+<span class="cm"># Plus embedding + output head (weight tied)</span>
+embed_params <span class="op">=</span> <span class="nm">256</span> <span class="op">*</span> d_model   <span class="cm"># = 16,384</span>
+<span class="fn">print</span>(<span class="st">f"Total nanoLlama: ~{(total_per_block*n_layers + embed_params):,}"</span>)
+<span class="cm"># ~279,040 parameters — tiny! Trains on CPU in minutes.</span></pre>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>What You Now Know</h2>
+    <ul class="checklist">
+      <li class="done">FFN processes each token independently after attention mixes them</li>
+      <li class="done">SwiGLU uses 3 weight matrices: W_up, W_gate, W_down</li>
+      <li class="done">SiLU(gate) * up is the gating mechanism — more expressive than ReLU</li>
+      <li class="done">RMSNorm normalizes by root mean square, not mean+std like LayerNorm</li>
+      <li class="done">Pre-norm (normalize before each sub-layer) is more stable than post-norm</li>
+      <li>How do we wire MHA + FFN + RMSNorm into a complete block? (next lesson)</li>
+    </ul>
+  </div>
+
+  <a href="lesson-08.html" class="next-lesson">
+    <div><div class="next-label">Next Lesson</div><div class="next-title">LESSON 08 — THE TRANSFORMER BLOCK</div></div>
+    <div class="next-arrow">&#8594;</div>
+  </a>
+</div>
+</body>
+</html>

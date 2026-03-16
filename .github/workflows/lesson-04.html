@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 04 — Embeddings: Words as Vectors | nanoLlama</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Fraunces:ital,wght@0,300;0,700;0,900;1,300;1,700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#100a0a;--paper:#1a1010;--border:#2a1818;
+  --accent:#fb923c;--accent2:#fbbf24;--accent3:#34d399;
+  --text:#f0e8e0;--muted:#6a5050;
+  --mono:'JetBrains Mono',monospace;--serif:'Fraunces',serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;line-height:1.7;min-height:100vh}
+nav{background:var(--paper);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-brand{font-family:var(--serif);font-size:18px;font-weight:900;color:var(--accent);letter-spacing:-0.02em}
+.nav-brand span{color:var(--text);font-weight:300}
+.nav-lessons{display:flex;gap:4px}
+.nav-lessons a{display:flex;align-items:center;justify-content:center;width:28px;height:28px;font-size:10px;border:1px solid var(--border);color:var(--muted);text-decoration:none;transition:all 0.15s}
+.nav-lessons a.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700}
+.nav-lessons a.done{border-color:#3a1a0a;color:#8a4020}
+.nav-lessons a:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+.nav-right{font-size:11px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase}
+.hero{padding:64px 32px 48px;max-width:860px;margin:0 auto}
+.lesson-badge{display:inline-flex;align-items:center;gap:8px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:20px}
+.lesson-badge::before{content:'';width:24px;height:1px;background:var(--accent)}
+h1{font-family:var(--serif);font-size:clamp(32px,5vw,52px);font-weight:900;line-height:1.05;letter-spacing:-0.03em;margin-bottom:16px}
+h1 em{font-style:italic;color:var(--accent)}
+.hero-meta{display:flex;gap:20px;font-size:11px;color:var(--muted);margin-bottom:32px;letter-spacing:0.05em}
+.hero-desc{font-size:15px;line-height:1.8;color:#c0a090;max-width:640px;border-left:2px solid var(--accent);padding-left:20px}
+.main{max-width:860px;margin:0 auto;padding:0 32px 80px}
+.section{margin-bottom:56px}
+h2{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--text);margin-bottom:20px;display:flex;align-items:center;gap:12px}
+h2::after{content:'';flex:1;height:1px;background:var(--border)}
+h3{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:0.08em;text-transform:uppercase;margin:24px 0 10px}
+p{color:#c0a090;line-height:1.8;margin-bottom:14px}
+p strong{color:var(--text);font-weight:500}
+code{background:#160a06;padding:2px 6px;color:var(--accent);font-size:12px}
+.code-block{background:#0d0806;border:1px solid var(--border);border-left:3px solid var(--accent);margin:20px 0;overflow:hidden}
+.code-header{background:#120a08;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.code-title{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+.code-label{font-size:10px;padding:2px 8px;background:var(--accent);color:#000;font-weight:700;letter-spacing:0.05em}
+pre{padding:20px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7}
+.kw{color:#fb923c}.fn{color:#7dd3fc}.st{color:#86efac}.cm{color:#3a2018;font-style:italic}.nm{color:#fbbf24}.cl{color:#f9a8d4}.op{color:#64748b}
+.concept{background:var(--paper);border:1px solid var(--border);padding:20px 24px;margin:20px 0}
+.concept-title{font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent2);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.concept-title::before{content:'◆';font-size:8px}
+.concept p{margin:0;font-size:13px;color:#a08070}
+.callout{display:flex;gap:16px;padding:16px 20px;margin:20px 0;border:1px solid}
+.callout.info{border-color:#3a1a0a;background:#0a0604}
+.callout.warning{border-color:#3a2a00;background:#0f0900}
+.callout.success{border-color:#0a3a1a;background:#030a06}
+.callout-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.callout-text{font-size:12px;line-height:1.7;color:#a08070}
+.callout-text strong{color:var(--text)}
+
+/* EMBEDDING VISUALIZATION */
+.embed-vis{background:#0d0806;border:1px solid var(--border);padding:24px;margin:20px 0;overflow-x:auto}
+.embed-title{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+.embed-row{display:flex;align-items:center;gap:12px;margin-bottom:8px;font-size:12px}
+.embed-token{padding:4px 10px;border:1px solid #3a1a0a;background:#160a06;color:var(--accent);min-width:40px;text-align:center}
+.embed-arrow{color:var(--muted)}
+.embed-vec{display:flex;gap:2px}
+.embed-val{width:36px;height:28px;display:flex;align-items:center;justify-content:center;font-size:10px;border:1px solid #2a1208}
+.ev-high{background:#2a1208;color:#fb923c}
+.ev-mid{background:#1a1008;color:#a06040}
+.ev-low{background:#0d0806;color:#4a3028}
+.ev-neg{background:#1a0808;color:#f87171}
+.embed-shape{font-size:10px;color:var(--muted);margin-left:8px}
+
+/* LOOKUP TABLE VIZ */
+.lookup-table{background:#0d0806;border:1px solid var(--border);padding:20px;margin:20px 0}
+.lookup-grid{display:grid;grid-template-columns:auto 1fr;gap:2px}
+.lookup-header{display:flex;gap:2px;margin-bottom:4px;padding-left:52px}
+.lh-cell{width:36px;font-size:9px;text-align:center;color:var(--muted)}
+.lookup-row{display:flex;gap:2px;align-items:center}
+.lr-label{width:48px;font-size:11px;color:var(--accent);text-align:right;padding-right:4px}
+.lr-cell{width:36px;height:24px;display:flex;align-items:center;justify-content:center;font-size:9px;border:1px solid #1a0e08}
+
+.checklist{list-style:none;margin:16px 0}
+.checklist li{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #1a0e08;font-size:13px;color:#a08070}
+.checklist li:last-child{border-bottom:none}
+.checklist li::before{content:'○';color:var(--muted);flex-shrink:0}
+.checklist li.done::before{content:'●';color:var(--accent3)}
+.next-lesson{background:var(--paper);border:1px solid var(--border);padding:28px;display:flex;align-items:center;justify-content:space-between;margin-top:64px;text-decoration:none}
+.next-lesson:hover{border-color:var(--accent)}
+.next-label{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.next-title{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--text)}
+.next-arrow{font-size:24px;color:var(--accent)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">nano<span>Llama</span></div>
+  <div class="nav-lessons">
+    <a href="lesson-01.html" class="done">01</a><a href="lesson-02.html" class="done">02</a>
+    <a href="lesson-03.html" class="done">03</a>
+    <a href="lesson-04.html" class="active">04</a><a href="lesson-05.html">05</a>
+    <a href="#">06</a><a href="#">07</a><a href="#">08</a><a href="#">09</a><a href="#">10</a>
+    <a href="#">11</a><a href="#">12</a><a href="#">13</a><a href="#">14</a><a href="#">15</a>
+  </div>
+  <div class="nav-right">CPU · Pure PyTorch</div>
+</nav>
+
+<div class="hero">
+  <div class="lesson-badge">Lesson 04 of 15</div>
+  <h1>Embeddings: <em>Words</em><br>as Vectors</h1>
+  <div class="hero-meta">
+    <span>⏱ ~50 min</span>
+    <span>🔢 Representation Learning</span>
+    <span>💻 CPU only</span>
+  </div>
+  <p class="hero-desc">
+    Token IDs are meaningless integers to a neural network — they have no geometry, no similarity. <strong>Embeddings transform them into rich vectors</strong> where similar meanings live nearby in space. This is the first real layer of our nanoLlama.
+  </p>
+</div>
+
+<div class="main">
+
+  <div class="section">
+    <h2>The Problem With Integer Tokens</h2>
+    <p>If we feed token IDs directly into our network, we have a problem. Token 65 ("A") and token 66 ("B") are numerically close — does that mean "A" and "B" are semantically similar? Of course not. And token 32 ("space") is numerically between them — but a space isn't "between" A and B in any meaningful way.</p>
+    <p><strong>We need a learned representation</strong> where each token is a vector of floats that the model can manipulate. These vectors are called <strong>embeddings</strong>.</p>
+
+    <div class="embed-vis">
+      <div class="embed-title">Token → embedding vector (d_model = 6 in this visualization)</div>
+      <div class="embed-row">
+        <div class="embed-token">65<br><span style="font-size:9px;color:var(--muted)">'A'</span></div>
+        <div class="embed-arrow">→</div>
+        <div class="embed-vec">
+          <div class="embed-val ev-high">0.82</div><div class="embed-val ev-low">0.12</div>
+          <div class="embed-val ev-neg">-0.5</div><div class="embed-val ev-mid">0.44</div>
+          <div class="embed-val ev-high">0.91</div><div class="embed-val ev-low">0.07</div>
+        </div>
+        <div class="embed-shape">shape: (6,)</div>
+      </div>
+      <div class="embed-row">
+        <div class="embed-token">66<br><span style="font-size:9px;color:var(--muted)">'B'</span></div>
+        <div class="embed-arrow">→</div>
+        <div class="embed-vec">
+          <div class="embed-val ev-mid">0.41</div><div class="embed-val ev-high">0.88</div>
+          <div class="embed-val ev-mid">0.35</div><div class="embed-val ev-neg">-0.2</div>
+          <div class="embed-val ev-low">0.15</div><div class="embed-val ev-high">0.76</div>
+        </div>
+        <div class="embed-shape">shape: (6,)</div>
+      </div>
+      <div class="embed-row">
+        <div class="embed-token">32<br><span style="font-size:9px;color:var(--muted)">' '</span></div>
+        <div class="embed-arrow">→</div>
+        <div class="embed-vec">
+          <div class="embed-val ev-neg">-0.3</div><div class="embed-val ev-neg">-0.6</div>
+          <div class="embed-val ev-high">0.95</div><div class="embed-val ev-low">0.08</div>
+          <div class="embed-val ev-neg">-0.1</div><div class="embed-val ev-mid">0.32</div>
+        </div>
+        <div class="embed-shape">shape: (6,)</div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:12px">
+        After training, vectors for semantically similar tokens will point in similar directions.
+        The network <em>learns</em> these vectors via backprop — not manually set.
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>nn.Embedding: A Trainable Lookup Table</h2>
+    <p>PyTorch's <code>nn.Embedding</code> is literally a matrix of shape <code>(vocab_size, d_model)</code>. Looking up token 65 just means returning row 65 of this matrix. The magic is that this matrix has <code>requires_grad=True</code> — it gets updated during training like any other weight.</p>
+
+    <div class="lookup-table">
+      <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Embedding table: shape (vocab_size=256, d_model=6)</div>
+      <div style="display:flex;gap:2px;margin-bottom:4px;padding-left:56px">
+        <div style="width:40px;font-size:9px;text-align:center;color:var(--muted)">dim 0</div>
+        <div style="width:40px;font-size:9px;text-align:center;color:var(--muted)">dim 1</div>
+        <div style="width:40px;font-size:9px;text-align:center;color:var(--muted)">dim 2</div>
+        <div style="width:40px;font-size:9px;text-align:center;color:var(--muted)">dim 3</div>
+        <div style="width:40px;font-size:9px;text-align:center;color:var(--muted)">dim 4</div>
+        <div style="width:40px;font-size:9px;text-align:center;color:var(--muted)">dim 5</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="display:flex;gap:2px;align-items:center">
+          <div style="width:52px;font-size:10px;color:var(--accent);text-align:right;padding-right:4px">row 32 ' '</div>
+          <div style="width:40px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;background:#1a0808;border:1px solid #2a1208;color:#f87171">-0.30</div>
+          <div style="width:40px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;background:#1a0808;border:1px solid #2a1208;color:#f87171">-0.60</div>
+          <div style="width:40px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;background:#2a1208;border:1px solid #3a1a08;color:#fb923c">+0.95</div>
+          <div style="width:40px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;background:#1a0e08;border:1px solid #2a1208;color:#a06040">+0.08</div>
+          <div style="width:40px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;background:#1a0808;border:1px solid #2a1208;color:#f87171">-0.10</div>
+          <div style="width:40px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;background:#1a0e08;border:1px solid #2a1208;color:#a06040">+0.32</div>
+        </div>
+        <div style="display:flex;gap:2px;align-items:center">
+          <div style="width:52px;font-size:10px;color:var(--accent);text-align:right;padding-right:4px">row 65 'A'</div>
+          <div style="width:40px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;background:#2a1208;border:1px solid #3a1a08;color:#fb923c">+0.82</div>
+          <div style="width:40px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;background:#1a0e08;border:1px solid #2a1208;color:#a06040">+0.12</div>
+          <div style="width:40px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;background:#1a0808;border:1px solid #2a1208;color:#f87171">-0.50</div>
+          <div style="width:40px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;background:#1a0e08;border:1px solid #2a1208;color:#a06040">+0.44</div>
+          <div style="width:40px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;background:#2a1208;border:1px solid #3a1a08;color:#fb923c">+0.91</div>
+          <div style="width:40px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;background:#1a0e08;border:1px solid #2a1208;color:#a06040">+0.07</div>
+        </div>
+        <div style="display:flex;gap:2px;align-items:center">
+          <div style="width:52px;font-size:10px;color:var(--accent);text-align:right;padding-right:4px">row 66 'B'</div>
+          <div style="width:40px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;background:#1a0e08;border:1px solid #2a1208;color:#a06040">+0.41</div>
+          <div style="width:40px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;background:#2a1208;border:1px solid #3a1a08;color:#fb923c">+0.88</div>
+          <div style="width:40px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;background:#1a0e08;border:1px solid #2a1208;color:#a06040">+0.35</div>
+          <div style="width:40px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;background:#1a0808;border:1px solid #2a1208;color:#f87171">-0.20</div>
+          <div style="width:40px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;background:#1a0e08;border:1px solid #2a1208;color:#a06040">+0.15</div>
+          <div style="width:40px;height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;background:#2a1208;border:1px solid #3a1a08;color:#fbbf24">+0.76</div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:8px">...253 more rows (one per byte value)...</div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-title">embedding_layer.py — nn.Embedding from scratch</div>
+        <div class="code-label">CORE CODE</div>
+      </div>
+<pre><span class="kw">import</span> torch
+<span class="kw">import</span> torch.nn <span class="kw">as</span> nn
+
+<span class="cm"># ── nn.Embedding — what it is ────────────────────────────────</span>
+vocab_size <span class="op">=</span> <span class="nm">256</span>   <span class="cm"># our byte vocabulary</span>
+d_model    <span class="op">=</span> <span class="nm">64</span>    <span class="cm"># embedding dimension</span>
+
+<span class="cm"># This creates a (256, 64) matrix of learnable floats</span>
+embedding <span class="op">=</span> nn.<span class="cl">Embedding</span>(vocab_size, d_model)
+<span class="fn">print</span>(embedding.weight.shape)   <span class="cm"># torch.Size([256, 64])</span>
+<span class="fn">print</span>(embedding.weight.requires_grad)  <span class="cm"># True — it's learnable!</span>
+
+<span class="cm"># Memory cost: 256 * 64 * 4 bytes = 65,536 bytes = 64 KB. Tiny!</span>
+
+<span class="cm"># ── Lookup: integers → vectors ───────────────────────────────</span>
+<span class="cm"># Simulate a batch: 4 sequences of 32 tokens each</span>
+token_ids <span class="op">=</span> torch.<span class="fn">randint</span>(<span class="nm">0</span>, vocab_size, (<span class="nm">4</span>, <span class="nm">32</span>))  <span class="cm"># [4, 32]</span>
+<span class="fn">print</span>(token_ids.shape)   <span class="cm"># torch.Size([4, 32])</span>
+
+<span class="cm"># THE lookup — each integer becomes a 64-dim vector</span>
+x <span class="op">=</span> embedding(token_ids)
+<span class="fn">print</span>(x.shape)           <span class="cm"># torch.Size([4, 32, 64]) ← [batch, seq, d_model]</span>
+
+<span class="cm"># Look at token 65 ('A') — it's just row 65 of the weight matrix</span>
+a_embed1 <span class="op">=</span> embedding(torch.<span class="fn">tensor</span>([<span class="nm">65</span>]))      <span class="cm"># shape: [1, 64]</span>
+a_embed2 <span class="op">=</span> embedding.weight[<span class="nm">65</span>]             <span class="cm"># shape: [64] — same thing!</span>
+<span class="fn">print</span>(torch.<span class="fn">allclose</span>(a_embed1[<span class="nm">0</span>], a_embed2)) <span class="cm"># True — it's a lookup!</span>
+
+<span class="cm"># ── What happens during training? ────────────────────────────
+# When loss.backward() is called, the gradient flows back to the
+# embedding vectors of only the tokens that appeared in this batch.
+# Other rows are untouched. This is efficient — sparse updates!</span>
+
+<span class="cm"># ── Implement from scratch (same thing) ──────────────────────</span>
+<span class="kw">class</span> <span class="cl">ManualEmbedding</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, vocab_size, d_model):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        <span class="cm"># Same as nn.Embedding — just a learnable matrix</span>
+        self.weight <span class="op">=</span> nn.<span class="cl">Parameter</span>(torch.<span class="fn">randn</span>(vocab_size, d_model) <span class="op">*</span> <span class="nm">0.02</span>)
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, token_ids):
+        <span class="cm"># Index rows of weight matrix — that's all embedding lookup is!</span>
+        <span class="kw">return</span> self.weight[token_ids]  <span class="cm"># shape: [..., d_model]</span>
+
+<span class="cm"># Verify it works the same way</span>
+manual_emb <span class="op">=</span> <span class="cl">ManualEmbedding</span>(vocab_size, d_model)
+out <span class="op">=</span> manual_emb(token_ids)
+<span class="fn">print</span>(out.shape)  <span class="cm"># torch.Size([4, 32, 64]) ✓</span></pre>
+    </div>
+
+    <div class="concept">
+      <div class="concept-title">Why * 0.02 initialization?</div>
+      <p>We initialize embedding weights with small random values (std ≈ 0.02). If weights start too large, activations explode through the layers. Too small, and gradients vanish. 0.02 is a common heuristic — Llama uses a variant of this. We'll tune this properly in Lesson 12.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Weight Tying: Share Embedding & Output Weights</h2>
+    <p>Here's a powerful trick used in Llama and GPT: the embedding matrix and the final output projection matrix are <strong>the same matrix</strong>. This is called <strong>weight tying</strong> and it both saves memory and improves performance.</p>
+    <p>The intuition: if the embedding maps token 65 → some vector, the output head should map that same vector back → high probability for token 65. Using the same weights enforces this symmetry.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-title">weight_tying.py</div>
+        <div class="code-label">IMPORTANT TRICK</div>
+      </div>
+<pre><span class="kw">import</span> torch
+<span class="kw">import</span> torch.nn <span class="kw">as</span> nn
+
+vocab_size <span class="op">=</span> <span class="nm">256</span>
+d_model    <span class="op">=</span> <span class="nm">64</span>
+
+<span class="cm"># Embedding: (vocab_size, d_model) — token_id → vector</span>
+embedding <span class="op">=</span> nn.<span class="cl">Embedding</span>(vocab_size, d_model)
+
+<span class="cm"># Output head: (d_model, vocab_size) — vector → logit per token
+# WITHOUT weight tying — 2 separate parameter sets</span>
+output_head_separate <span class="op">=</span> nn.<span class="cl">Linear</span>(d_model, vocab_size, bias<span class="op">=</span><span class="kw">False</span>)
+<span class="cm"># Params: vocab_size*d_model + d_model*vocab_size = 2 * 256*64 = 32,768</span>
+
+<span class="cm"># WITH weight tying — share embedding.weight as the output projection</span>
+<span class="kw">class</span> <span class="cl">TiedOutputHead</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, embedding):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        self.embedding <span class="op">=</span> embedding  <span class="cm"># same object, not a copy!</span>
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x):
+        <span class="cm"># x: (batch, seq, d_model)
+        # embedding.weight: (vocab_size, d_model)
+        # We want: (batch, seq, vocab_size)
+        # = x @ embedding.weight.T</span>
+        <span class="kw">return</span> x <span class="op">@</span> self.embedding.weight.T
+
+<span class="cm"># Params: only 256*64 = 16,384 (half!) — same weights used twice.</span>
+tied_head <span class="op">=</span> <span class="cl">TiedOutputHead</span>(embedding)
+
+<span class="cm"># Test</span>
+token_ids <span class="op">=</span> torch.<span class="fn">randint</span>(<span class="nm">0</span>, <span class="nm">256</span>, (<span class="nm">2</span>, <span class="nm">8</span>))  <span class="cm"># (batch=2, seq=8)</span>
+hidden    <span class="op">=</span> embedding(token_ids)           <span class="cm"># (2, 8, 64)</span>
+logits    <span class="op">=</span> tied_head(hidden)              <span class="cm"># (2, 8, 256) — one logit per token</span>
+<span class="fn">print</span>(logits.shape)                         <span class="cm"># torch.Size([2, 8, 256]) ✓</span>
+
+<span class="cm"># These logits → softmax → probability distribution over next token
+# That's our model's prediction! (Lesson 12 covers this)</span></pre>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Putting It Together: The Embedding Module</h2>
+    <p>Here's the final embedding module we'll use in nanoLlama — it includes token embeddings. (Positional encoding comes separately in Lesson 09.)</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-title">nano_embedding.py — what goes in our model</div>
+        <div class="code-label">FINAL CODE</div>
+      </div>
+<pre><span class="kw">import</span> torch
+<span class="kw">import</span> torch.nn <span class="kw">as</span> nn
+
+<span class="kw">class</span> <span class="cl">TokenEmbedding</span>(nn.Module):
+    <span class="st">"""Token embedding lookup. Input: integer IDs. Output: float vectors."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, vocab_size: <span class="fn">int</span>, d_model: <span class="fn">int</span>):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        self.embed <span class="op">=</span> nn.<span class="cl">Embedding</span>(vocab_size, d_model)
+        self.d_model <span class="op">=</span> d_model
+        <span class="cm"># Initialize with small values — important for stable training</span>
+        nn.init.<span class="fn">normal_</span>(self.embed.weight, mean<span class="op">=</span><span class="nm">0.0</span>, std<span class="op">=</span><span class="nm">0.02</span>)
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, token_ids: torch.<span class="cl">Tensor</span>) <span class="op">-&gt;</span> torch.<span class="cl">Tensor</span>:
+        <span class="st">"""
+        Args:
+            token_ids: (batch, seq_len) — integer token IDs
+        Returns:
+            (batch, seq_len, d_model) — embedding vectors
+        """</span>
+        x <span class="op">=</span> self.embed(token_ids)   <span class="cm"># (batch, seq, d_model)</span>
+        <span class="cm"># Scale by sqrt(d_model) — common in transformers.
+        # Keeps values in a sensible range as d_model grows.</span>
+        <span class="kw">return</span> x <span class="op">*</span> (self.d_model <span class="op">**</span> <span class="nm">0.5</span>)
+
+
+<span class="cm"># ── Quick test matching our nanoLlama config ──────────────────</span>
+vocab_size <span class="op">=</span> <span class="nm">256</span>
+d_model    <span class="op">=</span> <span class="nm">64</span>
+batch_size <span class="op">=</span> <span class="nm">4</span>
+seq_len    <span class="op">=</span> <span class="nm">64</span>
+
+token_emb <span class="op">=</span> <span class="cl">TokenEmbedding</span>(vocab_size, d_model)
+
+<span class="cm"># Input: integer token IDs from DataLoader</span>
+token_ids <span class="op">=</span> torch.<span class="fn">randint</span>(<span class="nm">0</span>, vocab_size, (batch_size, seq_len))
+<span class="fn">print</span>(token_ids.shape)   <span class="cm"># [4, 64] — integers</span>
+
+<span class="cm"># Output: embedding vectors</span>
+x <span class="op">=</span> token_emb(token_ids)
+<span class="fn">print</span>(x.shape)           <span class="cm"># [4, 64, 64] — floats! [batch, seq, d_model]</span>
+<span class="fn">print</span>(x.dtype)           <span class="cm"># torch.float32</span>
+
+<span class="cm"># Count parameters</span>
+total_params <span class="op">=</span> <span class="fn">sum</span>(p.<span class="fn">numel</span>() <span class="kw">for</span> p <span class="kw">in</span> token_emb.<span class="fn">parameters</span>())
+<span class="fn">print</span>(<span class="st">f"Embedding params: {total_params:,}"</span>)  <span class="cm"># 16,384 (256*64)</span>
+<span class="fn">print</span>(<span class="st">f"Memory: {total_params * 4 / 1024:.1f} KB"</span>)  <span class="cm"># 64.0 KB</span></pre>
+    </div>
+
+    <div class="callout success">
+      <div class="callout-icon">✓</div>
+      <div class="callout-text"><strong>Shape check:</strong> After the embedding layer, our data has gone from <code>[batch, seq_len]</code> integers → <code>[batch, seq_len, d_model]</code> floats. Every operation from here on works in this 3D float space. The transformer blocks in lessons 5–10 will process this tensor.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>What You Now Know</h2>
+    <ul class="checklist">
+      <li class="done">Embeddings convert discrete token IDs into continuous vectors</li>
+      <li class="done">nn.Embedding is a (vocab_size × d_model) trainable matrix — lookup by row index</li>
+      <li class="done">Weight tying shares embedding and output weights to save parameters</li>
+      <li class="done">After embedding: shape is [batch, seq_len, d_model]</li>
+      <li class="done">Scaling by √d_model keeps values stable as d_model grows</li>
+      <li>How does the model know which position each token is at? (Lesson 09 — RoPE)</li>
+      <li>How do tokens "look at" each other? (Lesson 05 — Attention!)</li>
+    </ul>
+  </div>
+
+  <a href="lesson-05.html" class="next-lesson">
+    <div>
+      <div class="next-label">Next Lesson — The Big One</div>
+      <div class="next-title">Lesson 05 — Attention: The Heart of the Transformer</div>
+    </div>
+    <div class="next-arrow">→</div>
+  </a>
+</div>
+</body>
+</html>

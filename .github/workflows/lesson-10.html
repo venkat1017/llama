@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 10 — Full nanoLlama Architecture | nanoLlama</title>
+<link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@300;400;600;700;900&family=Unbounded:wght@300;400;600;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08090a;--paper:#0f1012;--border:#1c1e22;
+  --lime:#b8f000;--cyan:#00f0d0;--mag:#f000b8;--orange:#f07000;
+  --text:#e8eaec;--muted:#3a3e44;
+  --mono:'Inconsolata',monospace;--display:'Unbounded',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;line-height:1.75;min-height:100vh}
+nav{background:var(--paper);border-bottom:1px solid var(--border);padding:12px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-brand{font-family:var(--display);font-size:14px;font-weight:900;color:var(--lime);letter-spacing:0.02em}
+.nav-brand span{color:var(--text);font-weight:300}
+.nav-lessons{display:flex;gap:2px}
+.nav-lessons a{display:flex;align-items:center;justify-content:center;width:26px;height:26px;font-size:9px;border:1px solid var(--border);color:var(--muted);text-decoration:none;transition:all 0.15s}
+.nav-lessons a.active{background:var(--lime);border-color:var(--lime);color:#000;font-weight:900}
+.nav-lessons a.done{border-color:#1a2000;color:#3a5000}
+.nav-lessons a:hover:not(.active){border-color:var(--lime);color:var(--lime)}
+.nav-right{font-size:10px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase}
+.hero{padding:60px 36px 36px;max-width:900px;margin:0 auto}
+.badge{font-family:var(--display);font-size:10px;font-weight:600;letter-spacing:0.15em;color:var(--lime);margin-bottom:12px;text-transform:uppercase}
+h1{font-family:var(--display);font-size:clamp(32px,5vw,60px);font-weight:900;line-height:1.0;margin-bottom:12px;color:var(--text)}
+h1 .hl{color:var(--lime)}
+.hero-meta{display:flex;gap:18px;font-size:10px;color:var(--muted);margin-bottom:20px;text-transform:uppercase;letter-spacing:0.08em}
+.hero-desc{font-size:14px;line-height:1.8;color:#8a9aa8;max-width:660px;border-left:2px solid var(--lime);padding-left:18px}
+.main{max-width:900px;margin:0 auto;padding:0 36px 80px}
+.section{margin-bottom:52px}
+h2{font-family:var(--display);font-size:18px;font-weight:900;color:var(--text);margin-bottom:18px;display:flex;align-items:center;gap:10px;text-transform:uppercase;letter-spacing:0.05em}
+h2::after{content:'';flex:1;height:1px;background:var(--border)}
+h3{font-size:11px;font-weight:700;color:var(--lime);letter-spacing:0.15em;text-transform:uppercase;margin:20px 0 10px}
+p{color:#8a9aa8;line-height:1.8;margin-bottom:14px}
+p strong{color:var(--text);font-weight:600}
+code{background:#101418;padding:2px 6px;color:var(--lime);font-size:11px;border:1px solid var(--border)}
+.code-block{background:#060708;border:1px solid var(--border);border-left:3px solid var(--lime);margin:18px 0;overflow:hidden}
+.code-header{background:#0a0c0e;padding:9px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.code-title{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+.code-label{font-size:9px;padding:2px 8px;background:var(--lime);color:#000;font-weight:900;letter-spacing:0.08em}
+pre{padding:18px;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.75;color:#c8d8e0}
+.kw{color:#f07000}.fn{color:#00f0d0}.st{color:#b8f000}.cm{color:#1c2428;font-style:italic}.nm{color:#00b8f0}.cl{color:#f000b8}.op{color:#3a4a54}
+.callout{display:flex;gap:14px;padding:14px 18px;margin:16px 0;border:1px solid}
+.callout.info{border-color:#001830;background:#020608}
+.callout.win{border-color:#102000;background:#040800}
+.callout.warn{border-color:#302000;background:#080600}
+.callout-icon{font-size:14px;flex-shrink:0;margin-top:2px}
+.callout-text{font-size:11px;line-height:1.7;color:#607080}
+.callout-text strong{color:var(--text)}
+
+/* ARCHITECTURE DIAGRAM */
+.arch-diagram{background:var(--paper);border:1px solid var(--border);padding:28px;margin:18px 0;font-size:12px;overflow-x:auto}
+.arch-title{font-family:var(--display);font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:20px}
+.arch-layer{display:flex;align-items:center;margin:0;gap:10px}
+.arch-box{padding:10px 16px;border:1px solid;text-align:center;flex:1;font-size:11px;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.arch-box.embed{border-color:#1a3050;background:#020c18;color:#00b8f0}
+.arch-box.rope{border-color:#301a00;background:#0c0600;color:var(--orange)}
+.arch-box.block{border-color:#1a3000;background:#060c00;color:var(--lime)}
+.arch-box.norm{border-color:#2a1030;background:#0a0608;color:var(--mag)}
+.arch-box.head{border-color:#2a1800;background:#0a0600;color:var(--orange)}
+.arch-shape{font-size:9px;color:var(--muted);margin-top:3px}
+.arch-arrow{color:var(--muted);font-size:16px;text-align:center;margin:3px 0;padding-left:calc(50% - 8px)}
+.arch-repeat{font-size:10px;color:var(--lime);padding-left:8px;white-space:nowrap}
+.arch-bracket{color:var(--lime);font-size:20px;margin-right:4px;align-self:stretch;display:flex;align-items:center}
+
+/* PARAM TABLE */
+.param-table{width:100%;border-collapse:collapse;font-size:12px;margin:16px 0}
+.param-table th{background:#0a0c0e;padding:8px 12px;text-align:left;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);font-weight:600}
+.param-table td{padding:8px 12px;border-bottom:1px solid var(--border);color:#8a9aa8}
+.param-table tr:last-child td{color:var(--lime);font-weight:700;background:#060c00}
+.param-table td:first-child{color:var(--text)}
+.param-table td:last-child{text-align:right;color:var(--lime)}
+
+/* MILESTONE */
+.milestone{background:#060c00;border:1px solid #1a3000;padding:24px;margin:32px 0}
+.milestone-label{font-family:var(--display);font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--lime);margin-bottom:10px}
+.milestone p{color:#607840;font-size:13px;line-height:1.7;margin:0}
+
+.checklist{list-style:none;margin:14px 0}
+.checklist li{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;color:#607080}
+.checklist li:last-child{border-bottom:none}
+.checklist li::before{content:'';width:8px;height:8px;border:1px solid var(--muted);flex-shrink:0;margin-top:5px;transform:rotate(45deg)}
+.checklist li.done::before{background:var(--lime);border-color:var(--lime)}
+.next-lesson{background:var(--paper);border:1px solid var(--border);padding:24px;display:flex;align-items:center;justify-content:space-between;margin-top:60px;text-decoration:none;transition:border-color 0.15s}
+.next-lesson:hover{border-color:var(--lime)}
+.next-label{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.next-title{font-family:var(--display);font-size:16px;font-weight:900;color:var(--text);text-transform:uppercase;letter-spacing:0.03em}
+.next-arrow{font-size:24px;color:var(--lime)}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-brand">NANO<span>LLAMA</span></div>
+  <div class="nav-lessons">
+    <a href="lesson-01.html" class="done">01</a><a href="lesson-02.html" class="done">02</a>
+    <a href="lesson-03.html" class="done">03</a><a href="lesson-04.html" class="done">04</a>
+    <a href="lesson-05.html" class="done">05</a><a href="lesson-06.html" class="done">06</a>
+    <a href="lesson-07.html" class="done">07</a><a href="lesson-08.html" class="done">08</a>
+    <a href="lesson-09.html" class="done">09</a>
+    <a href="lesson-10.html" class="active">10</a>
+    <a href="#">11</a><a href="#">12</a><a href="#">13</a><a href="#">14</a><a href="#">15</a>
+  </div>
+  <div class="nav-right">CPU Only</div>
+</nav>
+<div class="hero">
+  <div class="badge">Lesson 10 / 15 — Batch 2 Final</div>
+  <h1>FULL <span class="hl">nanoLlama</span><br>ARCHITECTURE</h1>
+  <div class="hero-meta"><span>90 min</span><span>Complete Model</span><span>270K Parameters</span></div>
+  <p class="hero-desc">Every piece is built. Now we assemble them into the <strong>complete nanoLlama model</strong>: token embedding → N transformer blocks with RoPE → final RMSNorm → output head. By the end of this lesson you'll have a working, untrained language model that can accept token IDs and output next-token logits.</p>
+</div>
+<div class="main">
+
+  <div class="section">
+    <h2>The Complete Architecture</h2>
+    <p>Here's the full data flow from token IDs to logits. Every component was built in lessons 04–09.</p>
+
+    <div class="arch-diagram">
+      <div class="arch-title">nanoLlama — complete forward pass</div>
+      <div class="arch-layer">
+        <div class="arch-box embed">Token Embedding<div class="arch-shape">vocab_size(256) &#8594; d_model(64)</div></div>
+      </div>
+      <div class="arch-arrow">&#8595; [B, S] int64 &#8594; [B, S, 64] float32</div>
+      <div style="display:flex;align-items:stretch;gap:0">
+        <div class="arch-bracket">[</div>
+        <div style="flex:1">
+          <div class="arch-layer">
+            <div class="arch-box block">RMSNorm &#8594; MHA+RoPE &#8594; residual<div class="arch-shape">attention sub-layer</div></div>
+          </div>
+          <div class="arch-arrow">&#8595;</div>
+          <div class="arch-layer">
+            <div class="arch-box block">RMSNorm &#8594; SwiGLU FFN &#8594; residual<div class="arch-shape">feed-forward sub-layer</div></div>
+          </div>
+        </div>
+        <div class="arch-repeat">&#215; n_layers<br>(4 blocks)</div>
+      </div>
+      <div class="arch-arrow">&#8595; [B, S, 64] throughout all blocks</div>
+      <div class="arch-layer">
+        <div class="arch-box norm">Final RMSNorm<div class="arch-shape">stabilize output</div></div>
+      </div>
+      <div class="arch-arrow">&#8595;</div>
+      <div class="arch-layer">
+        <div class="arch-box head">Output Head (tied weights)<div class="arch-shape">d_model(64) &#8594; vocab_size(256) logits</div></div>
+      </div>
+      <div class="arch-arrow">&#8595; [B, S, 256] — one logit per vocab token per position</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Complete nanoLlama Code</h2>
+    <div class="code-block">
+      <div class="code-header"><div class="code-title">nanollama.py — the complete model</div><div class="code-label">FINAL MODEL</div></div>
+<pre><span class="kw">import</span> torch
+<span class="kw">import</span> torch.nn <span class="kw">as</span> nn
+<span class="kw">import</span> torch.nn.functional <span class="kw">as</span> F
+<span class="kw">import</span> math
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+
+<span class="cm"># ─────────────────────────────────────────────────────────────
+#  Config dataclass  (all hyperparameters in one place)
+# ─────────────────────────────────────────────────────────────</span>
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> <span class="cl">NanoLlamaConfig</span>:
+    vocab_size:  <span class="fn">int</span> <span class="op">=</span> <span class="nm">256</span>     <span class="cm"># byte-level tokenizer</span>
+    d_model:     <span class="fn">int</span> <span class="op">=</span> <span class="nm">64</span>      <span class="cm"># embedding / hidden dimension</span>
+    n_heads:     <span class="fn">int</span> <span class="op">=</span> <span class="nm">4</span>       <span class="cm"># attention heads  (d_head=16)</span>
+    n_layers:    <span class="fn">int</span> <span class="op">=</span> <span class="nm">4</span>       <span class="cm"># transformer blocks</span>
+    max_seq_len: <span class="fn">int</span> <span class="op">=</span> <span class="nm">128</span>     <span class="cm"># max tokens in context</span>
+    hidden_dim:  <span class="fn">int</span> <span class="op">=</span> <span class="nm">256</span>     <span class="cm"># FFN hidden (4*d_model)</span>
+    rope_base:   <span class="fn">int</span> <span class="op">=</span> <span class="nm">10000</span>  <span class="cm"># RoPE frequency base</span>
+
+<span class="cm"># ─────────────────────────────────────────────────────────────
+#  Sub-modules (copy from previous lessons or paste inline)
+# ─────────────────────────────────────────────────────────────</span>
+
+<span class="kw">class</span> <span class="cl">RMSNorm</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, d, eps<span class="op">=</span><span class="nm">1e-6</span>):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        self.eps   <span class="op">=</span> eps
+        self.gamma <span class="op">=</span> nn.<span class="cl">Parameter</span>(torch.<span class="fn">ones</span>(d))
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x):
+        <span class="kw">return</span> self.gamma <span class="op">*</span> x <span class="op">/</span> x.<span class="fn">pow</span>(<span class="nm">2</span>).<span class="fn">mean</span>(<span class="op">-</span><span class="nm">1</span>, keepdim<span class="op">=</span><span class="kw">True</span>).<span class="fn">add</span>(self.eps).<span class="fn">sqrt</span>()
+
+<span class="kw">class</span> <span class="cl">RotaryPE</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, d_head, max_seq, base<span class="op">=</span><span class="nm">10000</span>):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        i      <span class="op">=</span> torch.<span class="fn">arange</span>(<span class="nm">0</span>, d_head, <span class="nm">2</span>).<span class="fn">float</span>()
+        thetas <span class="op">=</span> <span class="nm">1.0</span> <span class="op">/</span> (base <span class="op">**</span> (i <span class="op">/</span> d_head))
+        pos    <span class="op">=</span> torch.<span class="fn">arange</span>(max_seq).<span class="fn">float</span>()
+        ang    <span class="op">=</span> torch.<span class="fn">outer</span>(pos, thetas)
+        self.<span class="fn">register_buffer</span>(<span class="st">'cos'</span>, ang.<span class="fn">cos</span>())
+        self.<span class="fn">register_buffer</span>(<span class="st">'sin'</span>, ang.<span class="fn">sin</span>())
+
+    <span class="kw">def</span> <span class="fn">rotate</span>(self, x):
+        S <span class="op">=</span> x.shape[<span class="nm">2</span>]
+        c <span class="op">=</span> self.cos[:S].<span class="fn">unsqueeze</span>(<span class="nm">0</span>).<span class="fn">unsqueeze</span>(<span class="nm">0</span>)
+        s <span class="op">=</span> self.sin[:S].<span class="fn">unsqueeze</span>(<span class="nm">0</span>).<span class="fn">unsqueeze</span>(<span class="nm">0</span>)
+        e, o <span class="op">=</span> x[<span class="op">...</span>, <span class="nm">0</span>::<span class="nm">2</span>], x[<span class="op">...</span>, <span class="nm">1</span>::<span class="nm">2</span>]
+        <span class="kw">return</span> torch.<span class="fn">stack</span>([e<span class="op">*</span>c<span class="op">-</span>o<span class="op">*</span>s, e<span class="op">*</span>s<span class="op">+</span>o<span class="op">*</span>c], dim<span class="op">=-</span><span class="nm">1</span>).<span class="fn">flatten</span>(<span class="op">-</span><span class="nm">2</span>)
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, q, k):
+        <span class="kw">return</span> self.<span class="fn">rotate</span>(q), self.<span class="fn">rotate</span>(k)
+
+<span class="kw">class</span> <span class="cl">MultiHeadAttn</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, cfg):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        self.H     <span class="op">=</span> cfg.n_heads
+        self.d_h   <span class="op">=</span> cfg.d_model <span class="op">//</span> cfg.n_heads
+        self.scale <span class="op">=</span> math.<span class="fn">sqrt</span>(self.d_h)
+        self.qkv   <span class="op">=</span> nn.<span class="cl">Linear</span>(cfg.d_model, <span class="nm">3</span><span class="op">*</span>cfg.d_model, bias<span class="op">=</span><span class="kw">False</span>)
+        self.out   <span class="op">=</span> nn.<span class="cl">Linear</span>(cfg.d_model, cfg.d_model, bias<span class="op">=</span><span class="kw">False</span>)
+        self.rope  <span class="op">=</span> <span class="cl">RotaryPE</span>(self.d_h, cfg.max_seq_len, cfg.rope_base)
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x):
+        B, S, D <span class="op">=</span> x.shape
+        <span class="kw">def</span> <span class="fn">sp</span>(t): <span class="kw">return</span> t.<span class="fn">view</span>(B,S,self.H,self.d_h).<span class="fn">transpose</span>(<span class="nm">1</span>,<span class="nm">2</span>)
+        q, k, v <span class="op">=</span> [<span class="fn">sp</span>(t) <span class="kw">for</span> t <span class="kw">in</span> self.<span class="fn">qkv</span>(x).<span class="fn">chunk</span>(<span class="nm">3</span>, dim<span class="op">=-</span><span class="nm">1</span>)]
+        q, k    <span class="op">=</span> self.<span class="fn">rope</span>(q, k)
+        mask    <span class="op">=</span> torch.<span class="fn">triu</span>(torch.<span class="fn">ones</span>(S,S,device<span class="op">=</span>x.device,dtype<span class="op">=</span>torch.bool),diagonal<span class="op">=</span><span class="nm">1</span>)
+        sc      <span class="op">=</span> (q<span class="op">@</span>k.<span class="fn">transpose</span>(<span class="op">-</span><span class="nm">2</span>,<span class="op">-</span><span class="nm">1</span>))<span class="op">/</span>self.scale
+        sc      <span class="op">=</span> sc.<span class="fn">masked_fill</span>(mask, <span class="fn">float</span>(<span class="st">'-inf'</span>))
+        o       <span class="op">=</span> F.<span class="fn">softmax</span>(sc, dim<span class="op">=-</span><span class="nm">1</span>) <span class="op">@</span> v
+        <span class="kw">return</span> self.<span class="fn">out</span>(o.<span class="fn">transpose</span>(<span class="nm">1</span>,<span class="nm">2</span>).<span class="fn">contiguous</span>().<span class="fn">view</span>(B,S,D))
+
+<span class="kw">class</span> <span class="cl">SwiGLU</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, cfg):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        self.wu <span class="op">=</span> nn.<span class="cl">Linear</span>(cfg.d_model, cfg.hidden_dim, bias<span class="op">=</span><span class="kw">False</span>)
+        self.wg <span class="op">=</span> nn.<span class="cl">Linear</span>(cfg.d_model, cfg.hidden_dim, bias<span class="op">=</span><span class="kw">False</span>)
+        self.wd <span class="op">=</span> nn.<span class="cl">Linear</span>(cfg.hidden_dim, cfg.d_model, bias<span class="op">=</span><span class="kw">False</span>)
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x):
+        <span class="kw">return</span> self.<span class="fn">wd</span>(F.<span class="fn">silu</span>(self.<span class="fn">wg</span>(x)) <span class="op">*</span> self.<span class="fn">wu</span>(x))
+
+<span class="kw">class</span> <span class="cl">Block</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, cfg):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        self.attn  <span class="op">=</span> <span class="cl">MultiHeadAttn</span>(cfg)
+        self.ffn   <span class="op">=</span> <span class="cl">SwiGLU</span>(cfg)
+        self.n1    <span class="op">=</span> <span class="cl">RMSNorm</span>(cfg.d_model)
+        self.n2    <span class="op">=</span> <span class="cl">RMSNorm</span>(cfg.d_model)
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x):
+        x <span class="op">=</span> x <span class="op">+</span> self.<span class="fn">attn</span>(self.<span class="fn">n1</span>(x))
+        x <span class="op">=</span> x <span class="op">+</span> self.<span class="fn">ffn</span>(self.<span class="fn">n2</span>(x))
+        <span class="kw">return</span> x
+
+<span class="cm"># ─────────────────────────────────────────────────────────────
+#  The complete nanoLlama model
+# ─────────────────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cl">NanoLlama</span>(nn.Module):
+    <span class="st">"""
+    Complete nanoLlama language model.
+    ~270K parameters. Trains on CPU in minutes.
+    Architecture: Llama-style (pre-norm, SwiGLU, RoPE, tied weights).
+    """</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, cfg: <span class="cl">NanoLlamaConfig</span>):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        self.cfg <span class="op">=</span> cfg
+
+        <span class="cm"># Token embedding table: (vocab_size, d_model)</span>
+        self.embed <span class="op">=</span> nn.<span class="cl">Embedding</span>(cfg.vocab_size, cfg.d_model)
+
+        <span class="cm"># Stack of transformer blocks</span>
+        self.blocks <span class="op">=</span> nn.<span class="cl">ModuleList</span>([<span class="cl">Block</span>(cfg) <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(cfg.n_layers)])
+
+        <span class="cm"># Final normalization before output head</span>
+        self.final_norm <span class="op">=</span> <span class="cl">RMSNorm</span>(cfg.d_model)
+
+        <span class="cm"># Output head: d_model -> vocab_size (tied weights with embed)</span>
+        self.lm_head <span class="op">=</span> nn.<span class="cl">Linear</span>(cfg.d_model, cfg.vocab_size, bias<span class="op">=</span><span class="kw">False</span>)
+
+        <span class="cm"># Weight tying: share embedding and output head weights
+        # This saves 16K parameters and improves performance</span>
+        self.lm_head.weight <span class="op">=</span> self.embed.weight
+
+        <span class="cm"># Initialize weights</span>
+        self.<span class="fn">apply</span>(self.<span class="fn">_init_weights</span>)
+
+    <span class="kw">def</span> <span class="fn">_init_weights</span>(self, module):
+        <span class="st">"""Standard weight init: normal for Linear/Embedding, ones for norms."""</span>
+        <span class="kw">if</span> <span class="fn">isinstance</span>(module, (nn.<span class="cl">Linear</span>, nn.<span class="cl">Embedding</span>)):
+            nn.init.<span class="fn">normal_</span>(module.weight, mean<span class="op">=</span><span class="nm">0.0</span>, std<span class="op">=</span><span class="nm">0.02</span>)
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, token_ids: torch.<span class="cl">Tensor</span>) <span class="op">-&gt;</span> torch.<span class="cl">Tensor</span>:
+        <span class="st">"""
+        Args:
+            token_ids: (B, S) int64 token IDs
+        Returns:
+            logits: (B, S, vocab_size) — raw scores for next token
+        """</span>
+        <span class="cm"># 1. Embed tokens: (B, S) -> (B, S, d_model)</span>
+        x <span class="op">=</span> self.<span class="fn">embed</span>(token_ids)
+
+        <span class="cm"># 2. Pass through all transformer blocks</span>
+        <span class="kw">for</span> block <span class="kw">in</span> self.blocks:
+            x <span class="op">=</span> block(x)   <span class="cm"># shape stays (B, S, d_model)</span>
+
+        <span class="cm"># 3. Final normalization</span>
+        x <span class="op">=</span> self.<span class="fn">final_norm</span>(x)
+
+        <span class="cm"># 4. Project to vocabulary logits: (B, S, d_model) -> (B, S, vocab_size)</span>
+        logits <span class="op">=</span> self.<span class="fn">lm_head</span>(x)
+
+        <span class="kw">return</span> logits   <span class="cm"># (B, S, 256)</span>
+
+    <span class="kw">def</span> <span class="fn">count_params</span>(self) <span class="op">-&gt;</span> <span class="fn">int</span>:
+        <span class="kw">return</span> <span class="fn">sum</span>(p.<span class="fn">numel</span>() <span class="kw">for</span> p <span class="kw">in</span> self.<span class="fn">parameters</span>() <span class="kw">if</span> p.requires_grad)
+
+<span class="cm"># ── Test the complete model ───────────────────────────────────</span>
+cfg   <span class="op">=</span> <span class="cl">NanoLlamaConfig</span>()
+model <span class="op">=</span> <span class="cl">NanoLlama</span>(cfg)
+
+<span class="fn">print</span>(<span class="st">f"Parameters: {model.count_params():,}"</span>)   <span class="cm"># ~270,208</span>
+
+<span class="cm"># Forward pass</span>
+batch   <span class="op">=</span> torch.<span class="fn">randint</span>(<span class="nm">0</span>, <span class="nm">256</span>, (<span class="nm">4</span>, <span class="nm">64</span>))   <span class="cm"># (B=4, S=64) token IDs</span>
+logits  <span class="op">=</span> model(batch)
+<span class="fn">print</span>(<span class="st">f"Input:  {batch.shape}"</span>)               <span class="cm"># [4, 64]</span>
+<span class="fn">print</span>(<span class="st">f"Output: {logits.shape}"</span>)              <span class="cm"># [4, 64, 256]</span>
+
+<span class="cm"># Memory estimate (float32)</span>
+mem_mb <span class="op">=</span> model.<span class="fn">count_params</span>() <span class="op">*</span> <span class="nm">4</span> <span class="op">/</span> <span class="nm">1e6</span>
+<span class="fn">print</span>(<span class="st">f"Model memory: {mem_mb:.1f} MB"</span>)       <span class="cm"># ~1.1 MB</span></pre>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Parameter Breakdown</h2>
+    <table class="param-table">
+      <thead><tr><th>Component</th><th>Shape</th><th>Parameters</th></tr></thead>
+      <tbody>
+        <tr><td>Token Embedding</td><td>256 x 64</td><td style="text-align:right">16,384</td></tr>
+        <tr><td>MHA (per block)</td><td>qkv+out projections</td><td style="text-align:right">16,384</td></tr>
+        <tr><td>SwiGLU FFN (per block)</td><td>3 x (64 x 256)</td><td style="text-align:right">49,152</td></tr>
+        <tr><td>RMSNorm x2 (per block)</td><td>2 x 64</td><td style="text-align:right">128</td></tr>
+        <tr><td>x 4 blocks</td><td>—</td><td style="text-align:right">262,656</td></tr>
+        <tr><td>Final RMSNorm</td><td>64</td><td style="text-align:right">64</td></tr>
+        <tr><td>Output Head</td><td>tied with embed</td><td style="text-align:right">0 (shared)</td></tr>
+        <tr><td><strong>TOTAL</strong></td><td>—</td><td style="text-align:right"><strong>~279,104</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="milestone">
+    <div class="milestone-label">&#10003; Batch 2 Complete — Lessons 06–10</div>
+    <p>You now have a complete, working nanoLlama architecture in ~100 lines of pure PyTorch. It accepts token IDs and outputs logits. It's untrained — the weights are random — but the structure is correct and the forward pass runs. In Batch 3 (lessons 11–15), we'll train it, generate text, and understand every detail of the optimization process.</p>
+  </div>
+
+  <div class="section">
+    <h2>What You Now Know</h2>
+    <ul class="checklist">
+      <li class="done">Complete nanoLlama: embed → N blocks (MHA+RoPE+FFN+RMSNorm+residuals) → norm → head</li>
+      <li class="done">Weight tying: lm_head.weight = embed.weight (saves params, improves perf)</li>
+      <li class="done">Config dataclass: all hyperparameters in one place</li>
+      <li class="done">~279K parameters total — trains on CPU in minutes</li>
+      <li class="done">Forward pass: [B, S] int64 → [B, S, 256] float32 logits</li>
+      <li>How do we compute loss and run the training loop? (Lesson 11)</li>
+    </ul>
+  </div>
+
+  <a href="#" class="next-lesson" style="opacity:0.5;pointer-events:none">
+    <div><div class="next-label">Coming in Batch 3</div><div class="next-title">LESSON 11 — THE TRAINING LOOP</div></div>
+    <div class="next-arrow">&#8594;</div>
+  </a>
+</div>
+</body>
+</html>

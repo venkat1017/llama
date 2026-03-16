@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 11 - The Training Loop | nanoLlama</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Fraunces:ital,wght@0,300;0,700;0,900;1,300;1,700&display=swap" rel="stylesheet">
+<style>:root{
+  --bg:#060a08;--paper:#0c120e;--border:#162018;
+  --accent:#4ade80;--accent2:#facc15;--accent3:#34d399;
+  --text:#f0f0f0;--muted:#3a5040;
+  --mono:'JetBrains Mono',monospace;--serif:'Fraunces',serif;
+  --done-border:#162018;--done-color:#3a5040;
+  --desc-color:#4ade8088;
+  --prose:#4ade8099;
+  --code-bg:#060a08;
+  --fn-color:#4ade80;--cm-color:#162018;--op-color:#3a5040;
+  --call-info:#162018;--call-warn:#302010;--call-key:#0a2820;
+  
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--mono);font-size:14px;line-height:1.7;min-height:100vh;background:var(--bg);color:var(--text)}
+nav{background:var(--paper);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-brand{font-family:var(--serif);font-size:18px;font-weight:900;color:var(--accent);letter-spacing:-0.02em}
+.nav-brand span{color:var(--text);font-weight:300}
+.nav-lessons{display:flex;gap:4px}
+.nav-lessons a{display:flex;align-items:center;justify-content:center;width:28px;height:28px;font-size:10px;border:1px solid var(--border);color:var(--muted);text-decoration:none;transition:all 0.15s}
+.nav-lessons a.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700}
+.nav-lessons a.done{border-color:var(--done-border);color:var(--done-color)}
+.nav-lessons a:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+.nav-right{font-size:11px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase}
+.hero{padding:64px 32px 48px;max-width:920px;margin:0 auto}
+.lesson-badge{display:inline-flex;align-items:center;gap:8px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:20px}
+.lesson-badge::before{content:'';width:24px;height:1px;background:var(--accent)}
+h1{font-family:var(--serif);font-size:clamp(32px,5vw,52px);font-weight:900;line-height:1.05;letter-spacing:-0.03em;margin-bottom:16px}
+h1 em{font-style:italic;color:var(--accent)}
+.hero-meta{display:flex;gap:20px;font-size:11px;color:var(--muted);margin-bottom:32px}
+.hero-desc{font-size:15px;line-height:1.8;color:var(--desc-color);max-width:680px;border-left:2px solid var(--accent);padding-left:20px}
+.main{max-width:920px;margin:0 auto;padding:0 32px 80px}
+.section{margin-bottom:56px}
+h2{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--text);margin-bottom:20px;display:flex;align-items:center;gap:12px}
+h2::after{content:'';flex:1;height:1px;background:var(--border)}
+h3{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:0.08em;text-transform:uppercase;margin:24px 0 10px}
+p{color:var(--prose);line-height:1.8;margin-bottom:14px}
+p strong{color:var(--text);font-weight:500}
+code{background:var(--code-bg);padding:2px 6px;color:var(--accent);font-size:12px}
+.code-block{background:var(--code-bg);border:1px solid var(--border);border-left:3px solid var(--accent);margin:20px 0;overflow:hidden}
+.code-header{background:var(--paper);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.code-title{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+.code-label{font-size:10px;padding:2px 8px;background:var(--accent);color:#000;font-weight:700}
+pre{padding:20px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7}
+.kw{color:#93c5fd}.fn{color:var(--fn-color)}.st{color:#fde68a}.cm{color:var(--cm-color);font-style:italic}.nm{color:var(--accent)}.cl{color:#f9a8d4}.op{color:var(--op-color)}
+.concept{background:var(--paper);border:1px solid var(--border);padding:20px 24px;margin:20px 0}
+.concept-title{font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent2);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.concept-title::before{content:'◆';font-size:8px}
+.concept p{margin:0;font-size:13px;color:var(--prose)}
+.callout{display:flex;gap:16px;padding:16px 20px;margin:20px 0;border:1px solid}
+.callout.info{border-color:var(--call-info);background:var(--bg)}
+.callout.warning{border-color:var(--call-warn);background:var(--bg)}
+.callout.key{border-color:var(--call-key);background:var(--bg)}
+.callout-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.callout-text{font-size:12px;line-height:1.7;color:var(--prose)}
+.callout-text strong{color:var(--text)}
+.checklist{list-style:none;margin:16px 0}
+.checklist li{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--prose)}
+.checklist li:last-child{border-bottom:none}
+.checklist li::before{content:'○';color:var(--muted);flex-shrink:0}
+.checklist li.done::before{content:'●';color:var(--accent3)}
+.next-lesson{background:var(--paper);border:1px solid var(--border);padding:28px;display:flex;align-items:center;justify-content:space-between;margin-top:64px;text-decoration:none}
+.next-lesson:hover{border-color:var(--accent)}
+.next-label{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.next-title{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--text)}
+.next-arrow{font-size:24px;color:var(--accent)}
+</style>
+</head>
+<body>
+<nav><div class="nav-brand">nano<span>Llama</span></div><div class="nav-lessons"><a href="lesson-01.html" class="done">01</a><a href="lesson-02.html" class="done">02</a><a href="lesson-03.html" class="done">03</a><a href="lesson-04.html" class="done">04</a><a href="lesson-05.html" class="done">05</a><a href="lesson-06.html" class="done">06</a><a href="lesson-07.html" class="done">07</a><a href="lesson-08.html" class="done">08</a><a href="lesson-09.html" class="done">09</a><a href="lesson-10.html" class="done">10</a><a href="lesson-11.html" class="active">11</a><a href="lesson-12.html" class="">12</a><a href="lesson-13.html" class="">13</a><a href="lesson-14.html" class="">14</a><a href="lesson-15.html" class="">15</a></div><div class="nav-right">CPU · Pure PyTorch</div></nav>
+
+<div class="hero">
+  <div class="lesson-badge">Lesson 11 of 15</div>
+  <h1>The Training <em>Loop</em></h1>
+  <div class="hero-meta"><span>⏱ ~70 min</span><span>🔁 Optimization</span><span>💻 CPU only</span></div>
+  <p class="hero-desc">The model exists. Now we make it learn. The training loop is a <strong>tight four-step cycle</strong> repeated thousands of times: forward pass, compute loss, backward pass, update weights. Every LLM ever trained runs this same loop.</p>
+</div>
+<div class="main">
+
+<div class="section">
+<h2>The Four-Step Cycle</h2>
+<p>Each "step" processes one batch of token sequences. After thousands of steps, the model's weights converge to values that minimize loss on the training data.</p>
+<div style="background:var(--paper);border:1px solid var(--border);padding:24px;margin:20px 0">
+  <div style="display:flex;flex-direction:column;gap:0;max-width:560px">
+    <div style="display:flex;gap:16px;padding:14px 0;border-bottom:1px solid var(--border)">
+      <div style="width:28px;height:28px;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0">1</div>
+      <div><div style="color:var(--text);font-weight:700;font-size:13px;margin-bottom:3px">Forward Pass</div><div style="font-size:12px;color:var(--prose)">Run batch through model → logits [B, S, vocab_size]</div><div style="font-size:11px;color:var(--accent);margin-top:4px;font-family:var(--mono)">logits = model(x)</div></div>
+    </div>
+    <div style="display:flex;gap:16px;padding:14px 0;border-bottom:1px solid var(--border)">
+      <div style="width:28px;height:28px;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0">2</div>
+      <div><div style="color:var(--text);font-weight:700;font-size:13px;margin-bottom:3px">Compute Loss</div><div style="font-size:12px;color:var(--prose)">Cross-entropy vs correct next tokens. Random ≈ 5.5. Good ≈ 1.5.</div><div style="font-size:11px;color:var(--accent);margin-top:4px;font-family:var(--mono)">loss = F.cross_entropy(logits.view(-1,V), y.view(-1))</div></div>
+    </div>
+    <div style="display:flex;gap:16px;padding:14px 0;border-bottom:1px solid var(--border)">
+      <div style="width:28px;height:28px;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0">3</div>
+      <div><div style="color:var(--text);font-weight:700;font-size:13px;margin-bottom:3px">Backward Pass</div><div style="font-size:12px;color:var(--prose)">Compute gradient of loss w.r.t. every parameter. Zero first!</div><div style="font-size:11px;color:var(--accent);margin-top:4px;font-family:var(--mono)">optimizer.zero_grad() &nbsp;# clear old grads<br>loss.backward() &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# compute new grads</div></div>
+    </div>
+    <div style="display:flex;gap:16px;padding:14px 0">
+      <div style="width:28px;height:28px;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0">4</div>
+      <div><div style="color:var(--text);font-weight:700;font-size:13px;margin-bottom:3px">Update Weights</div><div style="font-size:12px;color:var(--prose)">Optimizer nudges each weight to reduce loss. Clip grads first.</div><div style="font-size:11px;color:var(--accent);margin-top:4px;font-family:var(--mono)">clip_grad_norm_(model.parameters(), 1.0)<br>optimizer.step()</div></div>
+    </div>
+  </div>
+</div>
+<div class="concept"><div class="concept-title">Why zero_grad() before backward()?</div><p>PyTorch accumulates gradients into .grad by default. Without zeroing, each backward() adds onto the previous batch's gradients - you'd train on a blend of all past batches. Always: zero → backward → step, every single iteration.</p></div>
+</div>
+
+<div class="section">
+<h2>Cross-Entropy Loss for LMs</h2>
+<p>At every sequence position, the model predicts which token comes next. Cross-entropy measures: how much probability did we assign to the correct token? <code>loss = -log(prob_correct)</code>. If uniform random over 256 tokens: <code>-log(1/256) = 5.54</code>. Good trained model: under 1.5.</p>
+<div class="code-block">
+<div class="code-header"><div class="code-title">loss_mechanics.py</div><div class="code-label">CONCEPT</div></div>
+<pre><span class="kw">import</span> torch
+<span class="kw">import</span> torch.nn.functional <span class="kw">as</span> F
+
+B, S, V <span class="op">=</span> <span class="nm">4</span>, <span class="nm">64</span>, <span class="nm">256</span>
+logits  <span class="op">=</span> torch.<span class="fn">randn</span>(B, S, V)                  <span class="cm"># model output</span>
+targets <span class="op">=</span> torch.<span class="fn">randint</span>(<span class="nm">0</span>, V, (B, S))           <span class="cm"># correct next tokens</span>
+
+<span class="cm"># F.cross_entropy needs: inputs (N, C), targets (N,)
+# Flatten batch and sequence dims into N = B*S</span>
+loss <span class="op">=</span> F.<span class="fn">cross_entropy</span>(logits.<span class="fn">view</span>(<span class="op">-</span><span class="nm">1</span>, V), targets.<span class="fn">view</span>(<span class="op">-</span><span class="nm">1</span>))
+<span class="fn">print</span>(<span class="st">f"Loss: {loss.item():.3f}"</span>)      <span class="cm"># ~5.5 - random baseline</span>
+<span class="fn">print</span>(<span class="st">f"PPL:  {loss.exp().item():.1f}"</span>)  <span class="cm"># ~256 - model "unsure" among all tokens</span>
+
+<span class="cm"># Manual verification of what cross_entropy does internally:</span>
+probs  <span class="op">=</span> F.<span class="fn">softmax</span>(logits[<span class="nm">0</span>, <span class="nm">0</span>], dim<span class="op">=-</span><span class="nm">1</span>)
+manual <span class="op">=</span> <span class="op">-</span>torch.<span class="fn">log</span>(probs[targets[<span class="nm">0</span>, <span class="nm">0</span>]])
+<span class="fn">print</span>(<span class="st">f"Manual (pos 0): {manual.item():.3f}"</span>)  <span class="cm"># matches!</span>
+
+<span class="cm"># DataLoader convention - shifted by one position:
+#   x = tokens[i   : i+seq_len]   ← input
+#   y = tokens[i+1 : i+seq_len+1] ← targets (the "next tokens")
+# At position j, model uses x[j] to predict y[j] = x[j+1]</span></pre>
+</div>
+</div>
+
+<div class="section">
+<h2>Complete Training Script</h2>
+<div class="code-block">
+<div class="code-header"><div class="code-title">train.py - full loop with validation and checkpointing</div><div class="code-label">CORE CODE</div></div>
+<pre><span class="kw">import</span> torch, time
+<span class="kw">import</span> torch.nn.functional <span class="kw">as</span> F
+
+<span class="kw">def</span> <span class="fn">train_epoch</span>(model, loader, optimizer, device<span class="op">=</span><span class="st">'cpu'</span>):
+    model.<span class="fn">train</span>()   <span class="cm"># enable training mode</span>
+    total, n <span class="op">=</span> <span class="nm">0.0</span>, <span class="nm">0</span>
+    <span class="kw">for</span> step, (x, y) <span class="kw">in</span> <span class="fn">enumerate</span>(loader):
+        t0 <span class="op">=</span> time.<span class="fn">time</span>()
+        x, y <span class="op">=</span> x.<span class="fn">to</span>(device), y.<span class="fn">to</span>(device)
+        B, S, _ <span class="op">=</span> (logits := model(x)).shape
+        loss <span class="op">=</span> F.<span class="fn">cross_entropy</span>(logits.<span class="fn">view</span>(B<span class="op">*</span>S, <span class="op">-</span><span class="nm">1</span>), y.<span class="fn">view</span>(B<span class="op">*</span>S))
+        optimizer.<span class="fn">zero_grad</span>()
+        loss.<span class="fn">backward</span>()
+        gnorm <span class="op">=</span> torch.nn.utils.<span class="fn">clip_grad_norm_</span>(model.<span class="fn">parameters</span>(), <span class="nm">1.0</span>)
+        optimizer.<span class="fn">step</span>()
+        total <span class="op">+=</span> loss.<span class="fn">item</span>(); n <span class="op">+=</span> <span class="nm">1</span>
+        <span class="kw">if</span> step <span class="op">%</span> <span class="nm">100</span> <span class="op">==</span> <span class="nm">0</span>:
+            tok_s <span class="op">=</span> B<span class="op">*</span>S <span class="op">/</span> (time.<span class="fn">time</span>()<span class="op">-</span>t0)
+            <span class="fn">print</span>(<span class="st">f"  step {step:4d} loss={loss.item():.3f} gnorm={gnorm:.2f} tok/s={tok_s:.0f}"</span>)
+    <span class="kw">return</span> total <span class="op">/</span> n
+
+<span class="kw">def</span> <span class="fn">evaluate</span>(model, loader, device<span class="op">=</span><span class="st">'cpu'</span>):
+    model.<span class="fn">eval</span>()   <span class="cm"># disable dropout / training-only behaviour</span>
+    total, n <span class="op">=</span> <span class="nm">0.0</span>, <span class="nm">0</span>
+    <span class="kw">with</span> torch.<span class="fn">no_grad</span>():   <span class="cm"># skip building computation graph</span>
+        <span class="kw">for</span> x, y <span class="kw">in</span> loader:
+            x, y <span class="op">=</span> x.<span class="fn">to</span>(device), y.<span class="fn">to</span>(device)
+            B, S, _ <span class="op">=</span> (logits := model(x)).shape
+            total <span class="op">+=</span> F.<span class="fn">cross_entropy</span>(logits.<span class="fn">view</span>(B<span class="op">*</span>S,<span class="op">-</span><span class="nm">1</span>), y.<span class="fn">view</span>(B<span class="op">*</span>S)).<span class="fn">item</span>()
+            n <span class="op">+=</span> <span class="nm">1</span>
+    <span class="kw">return</span> total <span class="op">/</span> n
+
+<span class="cm"># ── Main ─────────────────────────────────────────────────────</span>
+cfg   <span class="op">=</span> <span class="cl">NanoLlamaConfig</span>()
+model <span class="op">=</span> <span class="cl">NanoLlama</span>(cfg)
+opt   <span class="op">=</span> torch.optim.<span class="fn">AdamW</span>(model.<span class="fn">parameters</span>(), lr<span class="op">=</span><span class="nm">3e-4</span>, weight_decay<span class="op">=</span><span class="nm">0.1</span>)
+
+best_val <span class="op">=</span> <span class="fn">float</span>(<span class="st">'inf'</span>)
+<span class="kw">for</span> epoch <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">10</span>):
+    tr <span class="op">=</span> <span class="fn">train_epoch</span>(model, train_loader, opt)
+    vl <span class="op">=</span> <span class="fn">evaluate</span>(model, val_loader)
+    <span class="fn">print</span>(<span class="st">f"Epoch {epoch+1} | train={tr:.3f} val={vl:.3f} ppl={vl.exp() if hasattr(vl,'exp') else __import__('math').exp(vl):.1f}"</span>)
+    <span class="kw">if</span> vl <span class="op">&lt;</span> best_val:
+        best_val <span class="op">=</span> vl
+        torch.<span class="fn">save</span>({<span class="st">'model'</span>: model.<span class="fn">state_dict</span>(), <span class="st">'cfg'</span>: cfg}, <span class="st">'best.pt'</span>)
+        <span class="fn">print</span>(<span class="st">"  ✓ checkpoint saved"</span>)</pre>
+</div>
+<div class="callout info">
+<div class="callout-icon">💡</div>
+<div class="callout-text"><strong>model.train() vs model.eval():</strong> Always switch mode before each phase. With <code>torch.no_grad()</code> during eval, PyTorch skips building the computation graph - roughly 2× faster and uses much less memory. Never run eval without both.</div>
+</div>
+</div>
+
+<div class="section">
+<h2>What You Now Know</h2>
+<ul class="checklist">
+<li class="done">The 4-step cycle: forward → loss → zero+backward → clip+step</li>
+<li class="done">Cross-entropy: -log(prob of correct token). Random baseline ≈ 5.54</li>
+<li class="done">zero_grad() before every backward() - non-negotiable</li>
+<li class="done">clip_grad_norm_ prevents rare exploding gradient catastrophes</li>
+<li class="done">train() / eval() + no_grad() for correct evaluation behaviour</li>
+</ul>
+</div>
+
+<a href="lesson-12.html" class="next-lesson"><div><div class="next-label">Next Lesson</div><div class="next-title">Lesson 12 - Loss, Optimizer & Learning Rate</div></div><div class="next-arrow">→</div></a>
+</div></body></html>

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 05 — Attention: The Heart of the Transformer | nanoLlama</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Fraunces:ital,wght@0,300;0,700;0,900;1,300;1,700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080d10;--paper:#0d1418;--border:#162030;
+  --accent:#38bdf8;--accent2:#818cf8;--accent3:#34d399;--accent4:#fb923c;
+  --text:#e0eef8;--muted:#3a5060;
+  --mono:'JetBrains Mono',monospace;--serif:'Fraunces',serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;line-height:1.7;min-height:100vh}
+nav{background:var(--paper);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-brand{font-family:var(--serif);font-size:18px;font-weight:900;color:var(--accent);letter-spacing:-0.02em}
+.nav-brand span{color:var(--text);font-weight:300}
+.nav-lessons{display:flex;gap:4px}
+.nav-lessons a{display:flex;align-items:center;justify-content:center;width:28px;height:28px;font-size:10px;border:1px solid var(--border);color:var(--muted);text-decoration:none;transition:all 0.15s}
+.nav-lessons a.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700}
+.nav-lessons a.done{border-color:#0a2030;color:#1a5070}
+.nav-lessons a:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+.nav-right{font-size:11px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase}
+.hero{padding:64px 32px 48px;max-width:900px;margin:0 auto}
+.lesson-badge{display:inline-flex;align-items:center;gap:8px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:20px}
+.lesson-badge::before{content:'';width:24px;height:1px;background:var(--accent)}
+h1{font-family:var(--serif);font-size:clamp(32px,5vw,52px);font-weight:900;line-height:1.05;letter-spacing:-0.03em;margin-bottom:16px}
+h1 em{font-style:italic;color:var(--accent)}
+.hero-meta{display:flex;gap:20px;font-size:11px;color:var(--muted);margin-bottom:32px;letter-spacing:0.05em}
+.hero-desc{font-size:15px;line-height:1.8;color:#8ab8d0;max-width:680px;border-left:2px solid var(--accent);padding-left:20px}
+.main{max-width:900px;margin:0 auto;padding:0 32px 80px}
+.section{margin-bottom:56px}
+h2{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--text);margin-bottom:20px;display:flex;align-items:center;gap:12px}
+h2::after{content:'';flex:1;height:1px;background:var(--border)}
+h3{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:0.08em;text-transform:uppercase;margin:24px 0 10px}
+p{color:#8ab8d0;line-height:1.8;margin-bottom:14px}
+p strong{color:var(--text);font-weight:500}
+code{background:#060c12;padding:2px 6px;color:var(--accent);font-size:12px}
+.code-block{background:#060b10;border:1px solid var(--border);border-left:3px solid var(--accent);margin:20px 0;overflow:hidden}
+.code-header{background:#0a1018;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.code-title{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+.code-label{font-size:10px;padding:2px 8px;background:var(--accent);color:#000;font-weight:700;letter-spacing:0.05em}
+pre{padding:20px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7}
+.kw{color:#7dd3fc}.fn{color:#86efac}.st{color:#fcd34d}.cm{color:#162030;font-style:italic}.nm{color:#38bdf8}.cl{color:#c084fc}.op{color:#475569}
+.concept{background:var(--paper);border:1px solid var(--border);padding:20px 24px;margin:20px 0}
+.concept-title{font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent2);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.concept-title::before{content:'◆';font-size:8px}
+.concept p{margin:0;font-size:13px;color:#6090a8}
+.callout{display:flex;gap:16px;padding:16px 20px;margin:20px 0;border:1px solid}
+.callout.info{border-color:#0a2030;background:#040c14}
+.callout.warning{border-color:#303010;background:#0c0c04}
+.callout.key{border-color:#0a2a1a;background:#040c08}
+.callout-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.callout-text{font-size:12px;line-height:1.7;color:#6090a8}
+.callout-text strong{color:var(--text)}
+
+/* ATTENTION DIAGRAM */
+.attn-diagram{background:#060b10;border:1px solid var(--border);padding:28px;margin:20px 0;overflow-x:auto}
+.attn-title{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:20px}
+.attn-matrix{display:inline-grid;gap:2px;font-family:var(--mono);font-size:10px}
+.attn-cell{width:44px;height:32px;display:flex;align-items:center;justify-content:center;border:1px solid #0a1a28}
+.a-high{background:#0a3050;color:#38bdf8}
+.a-med{background:#061828;color:#1a6090}
+.a-low{background:#040c18;color:#0a3050}
+.a-mask{background:#0a0808;color:#1a1010;border-color:#0a0808}
+.attn-row-label{font-size:10px;color:var(--muted);text-align:right;padding-right:6px;display:flex;align-items:center;justify-content:flex-end}
+.attn-col-label{font-size:10px;color:var(--muted);text-align:center;width:44px;display:flex;align-items:center;justify-content:center}
+
+/* FORMULA */
+.formula{background:#040c18;border:1px solid #0a2030;padding:20px;margin:16px 0;text-align:center;font-size:15px}
+.formula .eq{color:var(--text);margin-bottom:8px}
+.formula .explain{font-size:11px;color:var(--muted);margin-top:8px}
+
+/* QKV DIAGRAM */
+.qkv-flow{display:flex;gap:0;margin:20px 0;overflow-x:auto}
+.qkv-col{flex:1;min-width:160px}
+.qkv-header{padding:10px;text-align:center;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;border:1px solid var(--border)}
+.qkv-q .qkv-header{background:#1a0a3a;border-color:#3a1a6a;color:#c084fc}
+.qkv-k .qkv-header{background:#0a1a3a;border-color:#1a3a6a;color:#38bdf8}
+.qkv-v .qkv-header{background:#0a3a1a;border-color:#1a6a3a;color:#34d399}
+.qkv-desc{padding:10px;font-size:11px;color:var(--muted);border:1px solid var(--border);border-top:none;min-height:80px;line-height:1.6}
+.qkv-shape{padding:8px 10px;font-size:10px;background:#040c18;border:1px solid var(--border);border-top:none;color:var(--muted);letter-spacing:0.05em}
+
+.checklist{list-style:none;margin:16px 0}
+.checklist li{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #0a1820;font-size:13px;color:#6090a8}
+.checklist li:last-child{border-bottom:none}
+.checklist li::before{content:'○';color:var(--muted);flex-shrink:0}
+.checklist li.done::before{content:'●';color:var(--accent3)}
+.next-lesson{background:var(--paper);border:1px solid var(--border);padding:28px;display:flex;align-items:center;justify-content:space-between;margin-top:64px;text-decoration:none}
+.next-lesson:hover{border-color:var(--accent)}
+.next-label{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.next-title{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--text)}
+.next-arrow{font-size:24px;color:var(--accent)}
+
+/* MILESTONE BOX */
+.milestone{background:#040c08;border:1px solid #0a3020;padding:24px;margin:32px 0}
+.milestone-title{font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent3);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.milestone p{color:#6a9880;margin:0;font-size:13px;line-height:1.7}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">nano<span>Llama</span></div>
+  <div class="nav-lessons">
+    <a href="lesson-01.html" class="done">01</a><a href="lesson-02.html" class="done">02</a>
+    <a href="lesson-03.html" class="done">03</a><a href="lesson-04.html" class="done">04</a>
+    <a href="lesson-05.html" class="active">05</a>
+    <a href="#">06</a><a href="#">07</a><a href="#">08</a><a href="#">09</a><a href="#">10</a>
+    <a href="#">11</a><a href="#">12</a><a href="#">13</a><a href="#">14</a><a href="#">15</a>
+  </div>
+  <div class="nav-right">CPU · Pure PyTorch</div>
+</nav>
+
+<div class="hero">
+  <div class="lesson-badge">Lesson 05 of 15 — The Big One</div>
+  <h1>Attention: <em>The Heart</em><br>of the Transformer</h1>
+  <div class="hero-meta">
+    <span>⏱ ~90 min</span>
+    <span>🔑 Core Mechanism</span>
+    <span>💻 CPU only</span>
+  </div>
+  <p class="hero-desc">
+    This is the most important lesson in the entire course. Attention is <em>the mechanism</em> that lets tokens "look at" each other. Every other part of the transformer is scaffolding around this idea. We will implement it <strong>from scratch, step by step</strong>, with no shortcuts.
+  </p>
+</div>
+
+<div class="main">
+
+  <div class="section">
+    <h2>The Core Intuition</h2>
+    <p>Before attention, models processed each token independently — they had no way to consider context. Attention solves this: for each token, it <strong>computes a weighted average of all other tokens' values</strong>, where the weights are based on relevance.</p>
+    <p>Think of it like a search engine at each position: <em>"I'm the word 'bank'. Which other words in this sentence should I look at? 'river' and 'water' are very relevant. 'the' is not."</em> The attention scores encode these relevance weights.</p>
+
+    <div class="concept">
+      <div class="concept-title">The Key Insight</div>
+      <p>Every token produces 3 vectors: a <strong>Query</strong> (what am I looking for?), a <strong>Key</strong> (what do I contain?), and a <strong>Value</strong> (what will I contribute?). The dot product of Query × Key gives the relevance score. We use that score to take a weighted average of Values.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Queries, Keys, and Values</h2>
+    <p>Each token's embedding is projected into 3 different vectors using 3 learned weight matrices — W_Q, W_K, W_V. These projections let the model learn different "roles" for each token in the attention computation.</p>
+
+    <div class="qkv-flow">
+      <div class="qkv-col qkv-q">
+        <div class="qkv-header">Query (Q)</div>
+        <div class="qkv-desc">"What am I looking for?" — represents what this token needs from others. Generated by projecting x through W_Q.</div>
+        <div class="qkv-shape">shape: (batch, seq, d_head)</div>
+      </div>
+      <div class="qkv-col qkv-k">
+        <div class="qkv-header">Key (K)</div>
+        <div class="qkv-desc">"What do I contain?" — represents what this token can offer to others. Generated by projecting x through W_K.</div>
+        <div class="qkv-shape">shape: (batch, seq, d_head)</div>
+      </div>
+      <div class="qkv-col qkv-v">
+        <div class="qkv-header">Value (V)</div>
+        <div class="qkv-desc">"What will I contribute?" — the actual content aggregated based on attention weights. Generated by projecting x through W_V.</div>
+        <div class="qkv-shape">shape: (batch, seq, d_head)</div>
+      </div>
+    </div>
+
+    <div class="formula">
+      <div class="eq">Attention(Q, K, V) = softmax( Q·Kᵀ / √d_k ) · V</div>
+      <div class="explain">
+        Q·Kᵀ = dot product scores (how much each Q matches each K)<br>
+        / √d_k = scale down to prevent softmax saturation<br>
+        softmax = normalize scores into probabilities (sum to 1)<br>
+        · V = weighted average of values
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>The Causal Mask — No Peeking Ahead</h2>
+    <p>In a language model, when predicting the next token, we cannot look at future tokens — that would be cheating! We enforce this with a <strong>causal mask</strong>: we set the attention scores for future positions to −∞ before the softmax, so their probability becomes 0.</p>
+
+    <div class="attn-diagram">
+      <div class="attn-title">Attention weight matrix (4×4 sequence) — after masking & softmax</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <div>
+          <div style="display:flex;gap:2px;margin-bottom:4px;padding-left:60px">
+            <div class="attn-col-label">The</div>
+            <div class="attn-col-label">cat</div>
+            <div class="attn-col-label">sat</div>
+            <div class="attn-col-label">down</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <div style="display:flex;gap:2px;align-items:center">
+              <div class="attn-row-label" style="width:56px">The →</div>
+              <div class="attn-cell a-high">1.00</div>
+              <div class="attn-cell a-mask">——</div>
+              <div class="attn-cell a-mask">——</div>
+              <div class="attn-cell a-mask">——</div>
+            </div>
+            <div style="display:flex;gap:2px;align-items:center">
+              <div class="attn-row-label" style="width:56px">cat →</div>
+              <div class="attn-cell a-med">0.30</div>
+              <div class="attn-cell a-high">0.70</div>
+              <div class="attn-cell a-mask">——</div>
+              <div class="attn-cell a-mask">——</div>
+            </div>
+            <div style="display:flex;gap:2px;align-items:center">
+              <div class="attn-row-label" style="width:56px">sat →</div>
+              <div class="attn-cell a-low">0.10</div>
+              <div class="attn-cell a-high">0.75</div>
+              <div class="attn-cell a-med">0.15</div>
+              <div class="attn-cell a-mask">——</div>
+            </div>
+            <div style="display:flex;gap:2px;align-items:center">
+              <div class="attn-row-label" style="width:56px">down →</div>
+              <div class="attn-cell a-low">0.05</div>
+              <div class="attn-cell a-med">0.25</div>
+              <div class="attn-cell a-high">0.60</div>
+              <div class="attn-cell a-med">0.10</div>
+            </div>
+          </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:10px">
+            Row = which token is "attending" | Col = which token it's looking at<br>
+            —— = masked (future position) | Values in each row sum to 1.0
+          </div>
+        </div>
+        <div style="font-size:12px;color:#6090a8;max-width:260px;padding-top:20px">
+          <div style="margin-bottom:8px"><span style="color:#38bdf8">■</span> "sat" attends strongly to "cat" (0.75) — makes sense, the cat is what sat!</div>
+          <div style="margin-bottom:8px"><span style="color:#1a6090">■</span> "down" attends mostly to "sat" (0.60) — the action it modifies</div>
+          <div><span style="color:#0a3050">■</span> Masked cells = future tokens, weight = 0 (can't look ahead)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Implementing Scaled Dot-Product Attention</h2>
+    <p>Now we implement the full attention function from scratch. Read every line carefully — this is the core of every transformer ever built.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-title">attention.py — scaled dot-product attention from scratch</div>
+        <div class="code-label">CORE CODE</div>
+      </div>
+<pre><span class="kw">import</span> torch
+<span class="kw">import</span> torch.nn <span class="kw">as</span> nn
+<span class="kw">import</span> torch.nn.functional <span class="kw">as</span> F
+<span class="kw">import</span> math
+
+<span class="kw">def</span> <span class="fn">scaled_dot_product_attention</span>(
+    q: torch.<span class="cl">Tensor</span>,  <span class="cm"># (batch, seq, d_head)</span>
+    k: torch.<span class="cl">Tensor</span>,  <span class="cm"># (batch, seq, d_head)</span>
+    v: torch.<span class="cl">Tensor</span>,  <span class="cm"># (batch, seq, d_head)</span>
+    mask: torch.<span class="cl">Tensor</span> <span class="op">=</span> <span class="kw">None</span>  <span class="cm"># (seq, seq) causal mask</span>
+) <span class="op">-&gt;</span> torch.<span class="cl">Tensor</span>:
+    <span class="st">"""
+    The core attention operation.
+    Returns: (batch, seq, d_head) — same shape as input.
+    """</span>
+    d_k <span class="op">=</span> q.shape[<span class="op">-</span><span class="nm">1</span>]  <span class="cm"># dimension of each head</span>
+
+    <span class="cm"># Step 1: Compute raw attention scores
+    # Q: (batch, seq, d_k)  K: (batch, seq, d_k)
+    # K.transpose(-2,-1): (batch, d_k, seq)
+    # scores: (batch, seq, seq) — score[i,j] = how much token i attends to token j</span>
+    scores <span class="op">=</span> q <span class="op">@</span> k.<span class="fn">transpose</span>(<span class="op">-</span><span class="nm">2</span>, <span class="op">-</span><span class="nm">1</span>)  <span class="cm"># (batch, seq, seq)</span>
+
+    <span class="cm"># Step 2: Scale to prevent softmax saturation
+    # Without scaling, dot products grow with d_k, pushing softmax into
+    # regions with tiny gradients (vanishing gradient problem)</span>
+    scores <span class="op">=</span> scores <span class="op">/</span> math.<span class="fn">sqrt</span>(d_k)
+
+    <span class="cm"># Step 3: Apply causal mask (prevent attending to future tokens)
+    # mask = upper triangular matrix of True values</span>
+    <span class="kw">if</span> mask <span class="kw">is not</span> <span class="kw">None</span>:
+        <span class="cm"># Replace masked positions with -inf so softmax makes them 0</span>
+        scores <span class="op">=</span> scores.<span class="fn">masked_fill</span>(mask, <span class="fn">float</span>(<span class="st">'-inf'</span>))
+
+    <span class="cm"># Step 4: Softmax to get attention weights (probabilities)
+    # Each row in (seq, seq) sums to 1.0</span>
+    attn_weights <span class="op">=</span> F.<span class="fn">softmax</span>(scores, dim<span class="op">=-</span><span class="nm">1</span>)  <span class="cm"># (batch, seq, seq)</span>
+
+    <span class="cm"># Step 5: Weighted average of Values
+    # attn_weights: (batch, seq, seq)  v: (batch, seq, d_k)
+    # output[i] = sum over j of attn_weights[i,j] * v[j]</span>
+    output <span class="op">=</span> attn_weights <span class="op">@</span> v  <span class="cm"># (batch, seq, d_k) ← same shape as input!</span>
+
+    <span class="kw">return</span> output, attn_weights  <span class="cm"># return weights for visualization</span>
+
+
+<span class="cm"># ── Test with tiny example ───────────────────────────────────</span>
+torch.<span class="fn">manual_seed</span>(<span class="nm">42</span>)
+batch, seq, d_k <span class="op">=</span> <span class="nm">2</span>, <span class="nm">4</span>, <span class="nm">8</span>
+
+q <span class="op">=</span> torch.<span class="fn">randn</span>(batch, seq, d_k)
+k <span class="op">=</span> torch.<span class="fn">randn</span>(batch, seq, d_k)
+v <span class="op">=</span> torch.<span class="fn">randn</span>(batch, seq, d_k)
+
+<span class="cm"># Build causal mask: True = "mask this position"</span>
+<span class="cm"># Upper triangle (excluding diagonal) = future positions</span>
+causal_mask <span class="op">=</span> torch.<span class="fn">triu</span>(torch.<span class="fn">ones</span>(seq, seq), diagonal<span class="op">=</span><span class="nm">1</span>).<span class="fn">bool</span>()
+<span class="fn">print</span>(<span class="st">"Causal mask:"</span>)
+<span class="fn">print</span>(causal_mask.<span class="fn">int</span>())
+<span class="cm"># tensor([[0, 1, 1, 1],
+#         [0, 0, 1, 1],
+#         [0, 0, 0, 1],
+#         [0, 0, 0, 0]])
+# 1 = masked (future), 0 = visible (past + present)</span>
+
+output, weights <span class="op">=</span> <span class="fn">scaled_dot_product_attention</span>(q, k, v, causal_mask)
+<span class="fn">print</span>(<span class="st">f"Output shape: {output.shape}"</span>)   <span class="cm"># [2, 4, 8] ← same as input!</span>
+
+<span class="cm"># Verify: attention weights sum to 1 along last dim</span>
+<span class="fn">print</span>(weights[<span class="nm">0</span>].<span class="fn">sum</span>(dim<span class="op">=-</span><span class="nm">1</span>))   <span class="cm"># tensor([1., 1., 1., 1.]) ✓</span>
+
+<span class="cm"># Verify: first row can only attend to position 0 (causal!)
+print(weights[0, 0])  # [1.0, 0.0, 0.0, 0.0] — only looks at itself ✓</span></pre>
+    </div>
+
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-text"><strong>Why does output have the same shape as input?</strong> Each token's output is a weighted sum of all Value vectors — that weighted sum has the same dimension as each individual Value (d_k). The attention mechanism <em>mixes information</em> between tokens without changing dimensions. This is key to stacking multiple transformer blocks.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Full Single-Head Attention Layer</h2>
+    <p>Now we wrap the attention function in an <code>nn.Module</code> with learnable W_Q, W_K, W_V projection matrices and an output projection W_O.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-title">single_head_attention.py — complete attention module</div>
+        <div class="code-label">FULL MODULE</div>
+      </div>
+<pre><span class="kw">import</span> torch
+<span class="kw">import</span> torch.nn <span class="kw">as</span> nn
+<span class="kw">import</span> torch.nn.functional <span class="kw">as</span> F
+<span class="kw">import</span> math
+
+<span class="kw">class</span> <span class="cl">SingleHeadAttention</span>(nn.Module):
+    <span class="st">"""
+    Single-head causal self-attention.
+    This is the building block. Multi-head attention (Lesson 06)
+    runs several of these in parallel and concatenates.
+    """</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, d_model: <span class="fn">int</span>, d_head: <span class="fn">int</span>):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        self.d_head <span class="op">=</span> d_head
+
+        <span class="cm"># Three projection matrices: input (d_model) → Q, K, V (d_head each)</span>
+        self.W_q <span class="op">=</span> nn.<span class="cl">Linear</span>(d_model, d_head, bias<span class="op">=</span><span class="kw">False</span>)  <span class="cm"># query projection</span>
+        self.W_k <span class="op">=</span> nn.<span class="cl">Linear</span>(d_model, d_head, bias<span class="op">=</span><span class="kw">False</span>)  <span class="cm"># key projection</span>
+        self.W_v <span class="op">=</span> nn.<span class="cl">Linear</span>(d_model, d_head, bias<span class="op">=</span><span class="kw">False</span>)  <span class="cm"># value projection</span>
+
+        <span class="cm"># Output projection: maps d_head back to d_model
+        # (In single-head, d_head == d_model typically)</span>
+        self.W_o <span class="op">=</span> nn.<span class="cl">Linear</span>(d_head, d_model, bias<span class="op">=</span><span class="kw">False</span>)
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x: torch.<span class="cl">Tensor</span>) <span class="op">-&gt;</span> torch.<span class="cl">Tensor</span>:
+        <span class="st">"""
+        Args:
+            x: (batch, seq_len, d_model)
+        Returns:
+            (batch, seq_len, d_model) — same shape!
+        """</span>
+        batch, seq, _ <span class="op">=</span> x.shape
+
+        <span class="cm"># Project inputs to Q, K, V</span>
+        q <span class="op">=</span> self.<span class="fn">W_q</span>(x)   <span class="cm"># (batch, seq, d_head)</span>
+        k <span class="op">=</span> self.<span class="fn">W_k</span>(x)   <span class="cm"># (batch, seq, d_head)</span>
+        v <span class="op">=</span> self.<span class="fn">W_v</span>(x)   <span class="cm"># (batch, seq, d_head)</span>
+
+        <span class="cm"># Build causal mask on the fly</span>
+        mask <span class="op">=</span> torch.<span class="fn">triu</span>(torch.<span class="fn">ones</span>(seq, seq, device<span class="op">=</span>x.device), diagonal<span class="op">=</span><span class="nm">1</span>).<span class="fn">bool</span>()
+
+        <span class="cm"># Core attention computation</span>
+        scores <span class="op">=</span> (q <span class="op">@</span> k.<span class="fn">transpose</span>(<span class="op">-</span><span class="nm">2</span>, <span class="op">-</span><span class="nm">1</span>)) <span class="op">/</span> math.<span class="fn">sqrt</span>(self.d_head)
+        scores <span class="op">=</span> scores.<span class="fn">masked_fill</span>(mask, <span class="fn">float</span>(<span class="st">'-inf'</span>))
+        attn   <span class="op">=</span> F.<span class="fn">softmax</span>(scores, dim<span class="op">=-</span><span class="nm">1</span>)   <span class="cm"># (batch, seq, seq)</span>
+        out    <span class="op">=</span> attn <span class="op">@</span> v                      <span class="cm"># (batch, seq, d_head)</span>
+
+        <span class="cm"># Project back to d_model</span>
+        <span class="kw">return</span> self.<span class="fn">W_o</span>(out)   <span class="cm"># (batch, seq, d_model)</span>
+
+
+<span class="cm"># ── Test with nanoLlama config ───────────────────────────────</span>
+d_model <span class="op">=</span> <span class="nm">64</span>
+d_head  <span class="op">=</span> <span class="nm">64</span>  <span class="cm"># for single-head, d_head == d_model</span>
+batch   <span class="op">=</span> <span class="nm">4</span>
+seq     <span class="op">=</span> <span class="nm">32</span>
+
+attn_layer <span class="op">=</span> <span class="cl">SingleHeadAttention</span>(d_model, d_head)
+x <span class="op">=</span> torch.<span class="fn">randn</span>(batch, seq, d_model)
+
+output <span class="op">=</span> attn_layer(x)
+<span class="fn">print</span>(<span class="st">f"Input:  {x.shape}"</span>)       <span class="cm"># [4, 32, 64]</span>
+<span class="fn">print</span>(<span class="st">f"Output: {output.shape}"</span>)  <span class="cm"># [4, 32, 64] ← same shape ✓</span>
+
+<span class="cm"># Count parameters</span>
+params <span class="op">=</span> <span class="fn">sum</span>(p.<span class="fn">numel</span>() <span class="kw">for</span> p <span class="kw">in</span> attn_layer.<span class="fn">parameters</span>())
+<span class="fn">print</span>(<span class="st">f"Attention params: {params:,}"</span>)
+<span class="cm"># W_q: 64*64=4096, W_k: 4096, W_v: 4096, W_o: 4096 → total: 16,384</span></pre>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Why Scaling by √d_k Matters</h2>
+    <p>Let's see what happens without scaling — this is a common debugging trap:</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-title">scaling_demo.py — visualize the scaling effect</div>
+        <div class="code-label">INTUITION</div>
+      </div>
+<pre><span class="kw">import</span> torch
+<span class="kw">import</span> torch.nn.functional <span class="kw">as</span> F
+
+torch.<span class="fn">manual_seed</span>(<span class="nm">0</span>)
+seq, d_k <span class="op">=</span> <span class="nm">4</span>, <span class="nm">64</span>
+
+q <span class="op">=</span> torch.<span class="fn">randn</span>(seq, d_k)
+k <span class="op">=</span> torch.<span class="fn">randn</span>(seq, d_k)
+
+<span class="cm"># Without scaling: dot products grow with d_k</span>
+scores_unscaled <span class="op">=</span> q <span class="op">@</span> k.T       <span class="cm"># values ~N(0, d_k) — large!</span>
+weights_unscaled <span class="op">=</span> F.<span class="fn">softmax</span>(scores_unscaled, dim<span class="op">=-</span><span class="nm">1</span>)
+<span class="fn">print</span>(<span class="st">"Unscaled weights (first row):"</span>)
+<span class="fn">print</span>(weights_unscaled[<span class="nm">0</span>].round(decimals<span class="op">=</span><span class="nm">3</span>))
+<span class="cm"># → [0.991, 0.000, 0.009, 0.000] — almost one-hot! Bad: kills gradients.</span>
+
+<span class="cm"># With scaling: dot products normalized to O(1)</span>
+scores_scaled <span class="op">=</span> q <span class="op">@</span> k.T <span class="op">/</span> (d_k <span class="op">**</span> <span class="nm">0.5</span>)
+weights_scaled <span class="op">=</span> F.<span class="fn">softmax</span>(scores_scaled, dim<span class="op">=-</span><span class="nm">1</span>)
+<span class="fn">print</span>(<span class="st">"\nScaled weights (first row):"</span>)
+<span class="fn">print</span>(weights_scaled[<span class="nm">0</span>].round(decimals<span class="op">=</span><span class="nm">3</span>))
+<span class="cm"># → [0.301, 0.198, 0.312, 0.189] — spread out, gradients flow! Good.</span>
+
+<span class="cm"># WHY: dot product of two d_k-dim vectors has variance = d_k
+# Dividing by sqrt(d_k) normalizes variance back to 1.0</span></pre>
+    </div>
+
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-text"><strong>Without scaling:</strong> softmax outputs collapse to near-one-hot distributions. The gradient of softmax is nearly zero in this regime — the model stops learning. This is called "attention collapse" and it's a real training failure mode. Always scale by √d_k.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Batch-Level Shape Summary</h2>
+    <p>Let's trace every tensor shape through the full attention computation with our nanoLlama config:</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-title">shape_trace.py — every shape, annotated</div>
+        <div class="code-label">SHAPE DRILL</div>
+      </div>
+<pre><span class="cm"># nanoLlama config</span>
+batch   <span class="op">=</span> <span class="nm">4</span>   <span class="cm"># sequences per batch</span>
+seq     <span class="op">=</span> <span class="nm">64</span>  <span class="cm"># tokens per sequence</span>
+d_model <span class="op">=</span> <span class="nm">64</span>  <span class="cm"># model dimension</span>
+d_head  <span class="op">=</span> <span class="nm">64</span>  <span class="cm"># head dimension (= d_model for single-head)</span>
+
+<span class="cm"># Input from embedding layer</span>
+x        <span class="cm"># [4,  64,  64]  — (batch, seq, d_model)</span>
+
+<span class="cm"># After Q, K, V projections (W_q, W_k, W_v are [d_model, d_head])</span>
+q        <span class="cm"># [4,  64,  64]  — (batch, seq, d_head)</span>
+k        <span class="cm"># [4,  64,  64]  — (batch, seq, d_head)</span>
+v        <span class="cm"># [4,  64,  64]  — (batch, seq, d_head)</span>
+
+<span class="cm"># Dot product Q @ K.T</span>
+scores   <span class="cm"># [4,  64,  64]  — (batch, seq, seq)  ← the attention matrix!</span>
+
+<span class="cm"># After divide + mask + softmax</span>
+attn_w   <span class="cm"># [4,  64,  64]  — still (batch, seq, seq)</span>
+
+<span class="cm"># After attn @ V (weighted sum of values)</span>
+out      <span class="cm"># [4,  64,  64]  — (batch, seq, d_head)</span>
+
+<span class="cm"># After output projection W_o</span>
+result   <span class="cm"># [4,  64,  64]  — (batch, seq, d_model)  ← same as input!</span>
+
+<span class="cm"># KEY TAKEAWAY: attention is shape-preserving.
+# x [B, S, D] → attention → [B, S, D]  ← identity in shape</span></pre>
+    </div>
+  </div>
+
+  <div class="milestone">
+    <div class="milestone-title">✓ Batch 1 Complete — Lessons 01–05</div>
+    <p>You've covered the two foundational pieces of nanoLlama: data representation (tensors, autograd, tokenization, embeddings) and the core computational mechanism (attention). In lessons 06–10, we'll build multi-head attention, the feed-forward block, normalization, positional encoding, and assemble them into the complete architecture.</p>
+  </div>
+
+  <div class="section">
+    <h2>What You Now Know</h2>
+    <ul class="checklist">
+      <li class="done">Attention computes a weighted average of Values, weighted by Query-Key similarity</li>
+      <li class="done">Q, K, V are learned projections of the same input</li>
+      <li class="done">The causal mask prevents attending to future tokens</li>
+      <li class="done">Scaling by √d_k prevents softmax saturation</li>
+      <li class="done">Attention is shape-preserving: [B, S, D] → [B, S, D]</li>
+      <li>How do we run multiple attention heads in parallel? (Lesson 06)</li>
+      <li>How does RoPE encode position into Q and K? (Lesson 09)</li>
+    </ul>
+  </div>
+
+  <a href="#" class="next-lesson" style="opacity:0.5;pointer-events:none">
+    <div>
+      <div class="next-label">Coming in Batch 2</div>
+      <div class="next-title">Lesson 06 — Multi-Head Attention</div>
+    </div>
+    <div class="next-arrow">→</div>
+  </a>
+</div>
+</body>
+</html>

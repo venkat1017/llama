@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 12 - Loss, Optimizer & Learning Rate | nanoLlama</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Fraunces:ital,wght@0,300;0,700;0,900;1,300;1,700&display=swap" rel="stylesheet">
+<style>:root{
+  --bg:#0d0906;--paper:#180f08;--border:#2a1a08;
+  --accent:#fb923c;--accent2:#fbbf24;--accent3:#4ade80;
+  --text:#f0f0f0;--muted:#5a3a18;
+  --mono:'JetBrains Mono',monospace;--serif:'Fraunces',serif;
+  --done-border:#2a1a08;--done-color:#5a3a18;
+  --desc-color:#fb923c88;
+  --prose:#fb923c99;
+  --code-bg:#0d0906;
+  --fn-color:#fb923c;--cm-color:#2a1a08;--op-color:#5a3a18;
+  --call-info:#2a1a08;--call-warn:#302010;--call-key:#0a2820;
+  
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--mono);font-size:14px;line-height:1.7;min-height:100vh;background:var(--bg);color:var(--text)}
+nav{background:var(--paper);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-brand{font-family:var(--serif);font-size:18px;font-weight:900;color:var(--accent);letter-spacing:-0.02em}
+.nav-brand span{color:var(--text);font-weight:300}
+.nav-lessons{display:flex;gap:4px}
+.nav-lessons a{display:flex;align-items:center;justify-content:center;width:28px;height:28px;font-size:10px;border:1px solid var(--border);color:var(--muted);text-decoration:none;transition:all 0.15s}
+.nav-lessons a.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700}
+.nav-lessons a.done{border-color:var(--done-border);color:var(--done-color)}
+.nav-lessons a:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+.nav-right{font-size:11px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase}
+.hero{padding:64px 32px 48px;max-width:920px;margin:0 auto}
+.lesson-badge{display:inline-flex;align-items:center;gap:8px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:20px}
+.lesson-badge::before{content:'';width:24px;height:1px;background:var(--accent)}
+h1{font-family:var(--serif);font-size:clamp(32px,5vw,52px);font-weight:900;line-height:1.05;letter-spacing:-0.03em;margin-bottom:16px}
+h1 em{font-style:italic;color:var(--accent)}
+.hero-meta{display:flex;gap:20px;font-size:11px;color:var(--muted);margin-bottom:32px}
+.hero-desc{font-size:15px;line-height:1.8;color:var(--desc-color);max-width:680px;border-left:2px solid var(--accent);padding-left:20px}
+.main{max-width:920px;margin:0 auto;padding:0 32px 80px}
+.section{margin-bottom:56px}
+h2{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--text);margin-bottom:20px;display:flex;align-items:center;gap:12px}
+h2::after{content:'';flex:1;height:1px;background:var(--border)}
+h3{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:0.08em;text-transform:uppercase;margin:24px 0 10px}
+p{color:var(--prose);line-height:1.8;margin-bottom:14px}
+p strong{color:var(--text);font-weight:500}
+code{background:var(--code-bg);padding:2px 6px;color:var(--accent);font-size:12px}
+.code-block{background:var(--code-bg);border:1px solid var(--border);border-left:3px solid var(--accent);margin:20px 0;overflow:hidden}
+.code-header{background:var(--paper);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.code-title{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+.code-label{font-size:10px;padding:2px 8px;background:var(--accent);color:#000;font-weight:700}
+pre{padding:20px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7}
+.kw{color:#93c5fd}.fn{color:var(--fn-color)}.st{color:#fde68a}.cm{color:var(--cm-color);font-style:italic}.nm{color:var(--accent)}.cl{color:#f9a8d4}.op{color:var(--op-color)}
+.concept{background:var(--paper);border:1px solid var(--border);padding:20px 24px;margin:20px 0}
+.concept-title{font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent2);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.concept-title::before{content:'◆';font-size:8px}
+.concept p{margin:0;font-size:13px;color:var(--prose)}
+.callout{display:flex;gap:16px;padding:16px 20px;margin:20px 0;border:1px solid}
+.callout.info{border-color:var(--call-info);background:var(--bg)}
+.callout.warning{border-color:var(--call-warn);background:var(--bg)}
+.callout.key{border-color:var(--call-key);background:var(--bg)}
+.callout-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.callout-text{font-size:12px;line-height:1.7;color:var(--prose)}
+.callout-text strong{color:var(--text)}
+.checklist{list-style:none;margin:16px 0}
+.checklist li{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--prose)}
+.checklist li:last-child{border-bottom:none}
+.checklist li::before{content:'○';color:var(--muted);flex-shrink:0}
+.checklist li.done::before{content:'●';color:var(--accent3)}
+.next-lesson{background:var(--paper);border:1px solid var(--border);padding:28px;display:flex;align-items:center;justify-content:space-between;margin-top:64px;text-decoration:none}
+.next-lesson:hover{border-color:var(--accent)}
+.next-label{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.next-title{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--text)}
+.next-arrow{font-size:24px;color:var(--accent)}
+</style>
+</head>
+<body>
+<nav><div class="nav-brand">nano<span>Llama</span></div><div class="nav-lessons"><a href="lesson-01.html" class="done">01</a><a href="lesson-02.html" class="done">02</a><a href="lesson-03.html" class="done">03</a><a href="lesson-04.html" class="done">04</a><a href="lesson-05.html" class="done">05</a><a href="lesson-06.html" class="done">06</a><a href="lesson-07.html" class="done">07</a><a href="lesson-08.html" class="done">08</a><a href="lesson-09.html" class="done">09</a><a href="lesson-10.html" class="done">10</a><a href="lesson-11.html" class="done">11</a><a href="lesson-12.html" class="active">12</a><a href="lesson-13.html" class="">13</a><a href="lesson-14.html" class="">14</a><a href="lesson-15.html" class="">15</a></div><div class="nav-right">CPU · Pure PyTorch</div></nav>
+
+<div class="hero">
+  <div class="lesson-badge">Lesson 12 of 15</div>
+  <h1>Loss, Optimizer<br>&amp; <em>Learning Rate</em></h1>
+  <div class="hero-meta"><span>⏱ ~65 min</span><span>📉 AdamW + Cosine LR</span><span>💻 CPU only</span></div>
+  <p class="hero-desc">Three knobs control how fast and how well a model learns: <strong>the loss function, the optimizer, and the learning rate schedule</strong>. We use AdamW with a cosine decay schedule - the same combination used to train GPT-2, Llama, and most modern LLMs.</p>
+</div>
+<div class="main">
+
+<div class="section">
+<h2>AdamW: Why Not Plain SGD?</h2>
+<p>Stochastic Gradient Descent (SGD) moves every parameter by <code>-lr × gradient</code>. Simple, but problems: some parameters need larger steps, some smaller. Gradients are noisy. Training stalls or diverges easily. <strong>Adam</strong> fixes this with two adaptive statistics per parameter: a running mean of gradients (momentum), and a running mean of squared gradients (velocity). AdamW adds proper weight decay on top.</p>
+<div class="code-block">
+<div class="code-header"><div class="code-title">adamw_explained.py - what AdamW does per parameter</div><div class="code-label">INTERNALS</div></div>
+<pre><span class="cm"># For each parameter θ, Adam maintains:
+#   m = exponential moving average of gradient g  (momentum)
+#   v = exponential moving average of g²           (velocity / scale)
+#
+# Update rule (simplified):
+#   m = β1 * m + (1 - β1) * g          # β1 = 0.9
+#   v = β2 * v + (1 - β2) * g²         # β2 = 0.95
+#   m̂ = m / (1 - β1^t)                 # bias correction (early steps)
+#   v̂ = v / (1 - β2^t)
+#   θ = θ - lr * m̂ / (sqrt(v̂) + ε)    # adaptive step size!
+#
+# The sqrt(v̂) in the denominator SCALES the step by signal strength:
+#   - Consistent gradient direction → small v̂ → larger effective step
+#   - Noisy gradient              → large v̂ → smaller effective step
+#
+# AdamW adds weight decay SEPARATELY from the gradient update:
+#   θ = θ - lr * m̂ / sqrt(v̂) - lr * weight_decay * θ
+#                                ↑ L2 regularisation, pushes weights toward 0</span>
+
+<span class="kw">import</span> torch
+
+optimizer <span class="op">=</span> torch.optim.<span class="fn">AdamW</span>(
+    model.<span class="fn">parameters</span>(),
+    lr<span class="op">=</span><span class="nm">3e-4</span>,           <span class="cm"># peak learning rate - main knob</span>
+    betas<span class="op">=</span>(<span class="nm">0.9</span>, <span class="nm">0.95</span>),  <span class="cm"># momentum β1, velocity β2</span>
+    eps<span class="op">=</span><span class="nm">1e-8</span>,           <span class="cm"># numerical stability in denominator</span>
+    weight_decay<span class="op">=</span><span class="nm">0.1</span>,  <span class="cm"># L2 regularisation strength</span>
+)
+<span class="cm"># weight_decay=0.1 is typical for LLMs.
+# Note: embedding and norm weights should NOT be decayed (they're not "overfitting" weights)
+# See Lesson 15 for the param_groups trick to exclude them.</span></pre>
+</div>
+</div>
+
+<div class="section">
+<h2>Cosine Learning Rate Schedule</h2>
+<p>A fixed learning rate is rarely optimal: too high → unstable early training. Too low → slow convergence. The solution used by almost every modern LLM: <strong>linear warmup then cosine decay</strong>. Warm up from 0 to peak lr over the first ~5% of steps, then decay smoothly to a small fraction of peak.</p>
+<div class="code-block">
+<div class="code-header"><div class="code-title">lr_schedule.py - cosine decay with linear warmup</div><div class="code-label">CORE CODE</div></div>
+<pre><span class="kw">import</span> math
+
+<span class="kw">def</span> <span class="fn">get_lr</span>(step: <span class="fn">int</span>, total_steps: <span class="fn">int</span>,
+           peak_lr: <span class="fn">float</span> <span class="op">=</span> <span class="nm">3e-4</span>,
+           min_lr:  <span class="fn">float</span> <span class="op">=</span> <span class="nm">3e-5</span>,
+           warmup_steps: <span class="fn">int</span> <span class="op">=</span> <span class="nm">100</span>) <span class="op">-&gt;</span> <span class="fn">float</span>:
+    <span class="st">&quot;&quot;&quot;Cosine decay schedule with linear warmup.
+    Used by GPT-2, Llama, and most modern LLM training runs.
+    &quot;&quot;&quot;</span>
+    <span class="cm"># Phase 1: linear warmup</span>
+    <span class="kw">if</span> step <span class="op">&lt;</span> warmup_steps:
+        <span class="kw">return</span> peak_lr <span class="op">*</span> (step <span class="op">+</span> <span class="nm">1</span>) <span class="op">/</span> warmup_steps
+
+    <span class="cm"># Phase 2: cosine decay from peak_lr to min_lr</span>
+    progress <span class="op">=</span> (step <span class="op">-</span> warmup_steps) <span class="op">/</span> (total_steps <span class="op">-</span> warmup_steps)
+    cosine   <span class="op">=</span> <span class="nm">0.5</span> <span class="op">*</span> (<span class="nm">1.0</span> <span class="op">+</span> math.<span class="fn">cos</span>(math.pi <span class="op">*</span> progress))
+    <span class="kw">return</span> min_lr <span class="op">+</span> (peak_lr <span class="op">-</span> min_lr) <span class="op">*</span> cosine
+
+
+<span class="cm"># Apply the schedule manually each step:
+# (We set lr directly rather than using a scheduler object -
+#  more transparent and easier to debug)</span>
+total_steps <span class="op">=</span> <span class="fn">len</span>(train_loader) <span class="op">*</span> n_epochs
+
+<span class="kw">for</span> step <span class="kw">in</span> <span class="fn">range</span>(total_steps):
+    <span class="cm"># Update lr before the optimizer step</span>
+    lr <span class="op">=</span> <span class="fn">get_lr</span>(step, total_steps)
+    <span class="kw">for</span> group <span class="kw">in</span> optimizer.param_groups:
+        group[<span class="st">'lr'</span>] <span class="op">=</span> lr
+
+    <span class="cm"># ... rest of training step ...</span>
+    <span class="kw">if</span> step <span class="op">%</span> <span class="nm">200</span> <span class="op">==</span> <span class="nm">0</span>:
+        <span class="fn">print</span>(<span class="st">f"step {step}: lr={lr:.2e}"</span>)
+<span class="cm"># step    0: lr=3.0e-06  ← warmup start
+# step  100: lr=3.0e-04  ← warmup complete (peak)
+# step  500: lr=2.1e-04  ← cosine decay begins
+# step 1000: lr=3.0e-05  ← near minimum (min_lr)</span></pre>
+</div>
+</div>
+
+<div class="section">
+<h2>Choosing Hyperparameters for nanoLlama</h2>
+<p>For our tiny CPU model, sensible defaults:</p>
+<div style="background:var(--paper);border:1px solid var(--border);padding:20px;margin:16px 0;font-size:12px">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+    <div style="border:1px solid var(--border);padding:12px"><div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">peak_lr</div><div style="color:var(--text);font-size:16px;font-weight:700">3e-4</div><div style="color:var(--prose);font-size:11px">Standard for AdamW on LLMs</div></div>
+    <div style="border:1px solid var(--border);padding:12px"><div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">batch_size</div><div style="color:var(--text);font-size:16px;font-weight:700">16</div><div style="color:var(--prose);font-size:11px">Max for 8GB RAM on CPU</div></div>
+    <div style="border:1px solid var(--border);padding:12px"><div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">weight_decay</div><div style="color:var(--text);font-size:16px;font-weight:700">0.1</div><div style="color:var(--prose);font-size:11px">Standard Llama value</div></div>
+    <div style="border:1px solid var(--border);padding:12px"><div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">warmup_steps</div><div style="color:var(--text);font-size:16px;font-weight:700">100</div><div style="color:var(--prose);font-size:11px">~5% of total steps</div></div>
+    <div style="border:1px solid var(--border);padding:12px"><div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">grad_clip</div><div style="color:var(--text);font-size:16px;font-weight:700">1.0</div><div style="color:var(--prose);font-size:11px">Universal default</div></div>
+    <div style="border:1px solid var(--border);padding:12px"><div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">epochs</div><div style="color:var(--text);font-size:16px;font-weight:700">5–10</div><div style="color:var(--prose);font-size:11px">Watch for val loss plateau</div></div>
+  </div>
+</div>
+<div class="callout key">
+<div class="callout-icon">✓</div>
+<div class="callout-text"><strong>If val loss stops improving but train loss keeps falling:</strong> you're overfitting. Stop training. If both losses plateau early: learning rate may be too low, or the model has insufficient capacity. If loss diverges (NaN): learning rate too high, or a bug in the model.</div>
+</div>
+</div>
+
+<div class="section">
+<h2>What You Now Know</h2>
+<ul class="checklist">
+<li class="done">AdamW adapts step size per parameter using momentum + velocity estimates</li>
+<li class="done">weight_decay=0.1 provides L2 regularisation, separate from gradient update</li>
+<li class="done">Cosine schedule: linear warmup then smooth decay to min_lr</li>
+<li class="done">Set lr per step by modifying optimizer.param_groups[n]['lr'] directly</li>
+<li class="done">Read training curves: diverge=lr too high, plateau=lr too low or overfitting</li>
+</ul>
+</div>
+
+<a href="lesson-13.html" class="next-lesson"><div><div class="next-label">Next Lesson</div><div class="next-title">Lesson 13 - CPU Training: Tips & Profiling</div></div><div class="next-arrow">→</div></a>
+</div></body></html>

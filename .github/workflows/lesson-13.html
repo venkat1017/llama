@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 13 - CPU Training: Tips & Profiling | nanoLlama</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Fraunces:ital,wght@0,300;0,700;0,900;1,300;1,700&display=swap" rel="stylesheet">
+<style>:root{
+  --bg:#080c10;--paper:#0e1420;--border:#16202e;
+  --accent:#38bdf8;--accent2:#818cf8;--accent3:#4ade80;
+  --text:#f0f0f0;--muted:#304050;
+  --mono:'JetBrains Mono',monospace;--serif:'Fraunces',serif;
+  --done-border:#16202e;--done-color:#304050;
+  --desc-color:#38bdf888;
+  --prose:#38bdf899;
+  --code-bg:#080c10;
+  --fn-color:#38bdf8;--cm-color:#16202e;--op-color:#304050;
+  --call-info:#16202e;--call-warn:#302010;--call-key:#0a2820;
+  
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--mono);font-size:14px;line-height:1.7;min-height:100vh;background:var(--bg);color:var(--text)}
+nav{background:var(--paper);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-brand{font-family:var(--serif);font-size:18px;font-weight:900;color:var(--accent);letter-spacing:-0.02em}
+.nav-brand span{color:var(--text);font-weight:300}
+.nav-lessons{display:flex;gap:4px}
+.nav-lessons a{display:flex;align-items:center;justify-content:center;width:28px;height:28px;font-size:10px;border:1px solid var(--border);color:var(--muted);text-decoration:none;transition:all 0.15s}
+.nav-lessons a.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700}
+.nav-lessons a.done{border-color:var(--done-border);color:var(--done-color)}
+.nav-lessons a:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+.nav-right{font-size:11px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase}
+.hero{padding:64px 32px 48px;max-width:920px;margin:0 auto}
+.lesson-badge{display:inline-flex;align-items:center;gap:8px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:20px}
+.lesson-badge::before{content:'';width:24px;height:1px;background:var(--accent)}
+h1{font-family:var(--serif);font-size:clamp(32px,5vw,52px);font-weight:900;line-height:1.05;letter-spacing:-0.03em;margin-bottom:16px}
+h1 em{font-style:italic;color:var(--accent)}
+.hero-meta{display:flex;gap:20px;font-size:11px;color:var(--muted);margin-bottom:32px}
+.hero-desc{font-size:15px;line-height:1.8;color:var(--desc-color);max-width:680px;border-left:2px solid var(--accent);padding-left:20px}
+.main{max-width:920px;margin:0 auto;padding:0 32px 80px}
+.section{margin-bottom:56px}
+h2{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--text);margin-bottom:20px;display:flex;align-items:center;gap:12px}
+h2::after{content:'';flex:1;height:1px;background:var(--border)}
+h3{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:0.08em;text-transform:uppercase;margin:24px 0 10px}
+p{color:var(--prose);line-height:1.8;margin-bottom:14px}
+p strong{color:var(--text);font-weight:500}
+code{background:var(--code-bg);padding:2px 6px;color:var(--accent);font-size:12px}
+.code-block{background:var(--code-bg);border:1px solid var(--border);border-left:3px solid var(--accent);margin:20px 0;overflow:hidden}
+.code-header{background:var(--paper);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.code-title{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+.code-label{font-size:10px;padding:2px 8px;background:var(--accent);color:#000;font-weight:700}
+pre{padding:20px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7}
+.kw{color:#93c5fd}.fn{color:var(--fn-color)}.st{color:#fde68a}.cm{color:var(--cm-color);font-style:italic}.nm{color:var(--accent)}.cl{color:#f9a8d4}.op{color:var(--op-color)}
+.concept{background:var(--paper);border:1px solid var(--border);padding:20px 24px;margin:20px 0}
+.concept-title{font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent2);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.concept-title::before{content:'◆';font-size:8px}
+.concept p{margin:0;font-size:13px;color:var(--prose)}
+.callout{display:flex;gap:16px;padding:16px 20px;margin:20px 0;border:1px solid}
+.callout.info{border-color:var(--call-info);background:var(--bg)}
+.callout.warning{border-color:var(--call-warn);background:var(--bg)}
+.callout.key{border-color:var(--call-key);background:var(--bg)}
+.callout-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.callout-text{font-size:12px;line-height:1.7;color:var(--prose)}
+.callout-text strong{color:var(--text)}
+.checklist{list-style:none;margin:16px 0}
+.checklist li{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--prose)}
+.checklist li:last-child{border-bottom:none}
+.checklist li::before{content:'○';color:var(--muted);flex-shrink:0}
+.checklist li.done::before{content:'●';color:var(--accent3)}
+.next-lesson{background:var(--paper);border:1px solid var(--border);padding:28px;display:flex;align-items:center;justify-content:space-between;margin-top:64px;text-decoration:none}
+.next-lesson:hover{border-color:var(--accent)}
+.next-label{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.next-title{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--text)}
+.next-arrow{font-size:24px;color:var(--accent)}
+</style>
+</head>
+<body>
+<nav><div class="nav-brand">nano<span>Llama</span></div><div class="nav-lessons"><a href="lesson-01.html" class="done">01</a><a href="lesson-02.html" class="done">02</a><a href="lesson-03.html" class="done">03</a><a href="lesson-04.html" class="done">04</a><a href="lesson-05.html" class="done">05</a><a href="lesson-06.html" class="done">06</a><a href="lesson-07.html" class="done">07</a><a href="lesson-08.html" class="done">08</a><a href="lesson-09.html" class="done">09</a><a href="lesson-10.html" class="done">10</a><a href="lesson-11.html" class="done">11</a><a href="lesson-12.html" class="done">12</a><a href="lesson-13.html" class="active">13</a><a href="lesson-14.html" class="">14</a><a href="lesson-15.html" class="">15</a></div><div class="nav-right">CPU · Pure PyTorch</div></nav>
+
+<div class="hero">
+  <div class="lesson-badge">Lesson 13 of 15</div>
+  <h1>CPU Training:<br><em>Tips &amp; Profiling</em></h1>
+  <div class="hero-meta"><span>⏱ ~50 min</span><span>⚡ Performance</span><span>💻 CPU only</span></div>
+  <p class="hero-desc">Training on CPU is slow - but not as slow as you might think if you <strong>profile carefully and eliminate bottlenecks</strong>. We'll measure where time actually goes, enable key PyTorch optimisations, and set up a training run that finishes in under 30 minutes on a modern laptop.</p>
+</div>
+<div class="main">
+
+<div class="section">
+<h2>Where Does Time Go?</h2>
+<p>Before optimising, measure. The biggest time sinks in CPU LLM training:</p>
+<div class="code-block">
+<div class="code-header"><div class="code-title">profile_training.py - find your actual bottleneck</div><div class="code-label">PROFILING</div></div>
+<pre><span class="kw">import</span> torch, time
+
+<span class="cm"># Simple timing of each step component</span>
+<span class="kw">def</span> <span class="fn">time_training_step</span>(model, x, y, optimizer):
+    timings <span class="op">=</span> {}
+
+    t0 <span class="op">=</span> time.<span class="fn">perf_counter</span>()
+    logits <span class="op">=</span> model(x)
+    timings[<span class="st">'forward'</span>] <span class="op">=</span> time.<span class="fn">perf_counter</span>() <span class="op">-</span> t0
+
+    t0 <span class="op">=</span> time.<span class="fn">perf_counter</span>()
+    B, S, V <span class="op">=</span> logits.shape
+    loss <span class="op">=</span> F.<span class="fn">cross_entropy</span>(logits.<span class="fn">view</span>(B<span class="op">*</span>S,V), y.<span class="fn">view</span>(B<span class="op">*</span>S))
+    timings[<span class="st">'loss'</span>] <span class="op">=</span> time.<span class="fn">perf_counter</span>() <span class="op">-</span> t0
+
+    t0 <span class="op">=</span> time.<span class="fn">perf_counter</span>()
+    optimizer.<span class="fn">zero_grad</span>(); loss.<span class="fn">backward</span>()
+    timings[<span class="st">'backward'</span>] <span class="op">=</span> time.<span class="fn">perf_counter</span>() <span class="op">-</span> t0
+
+    t0 <span class="op">=</span> time.<span class="fn">perf_counter</span>()
+    torch.nn.utils.<span class="fn">clip_grad_norm_</span>(model.<span class="fn">parameters</span>(), <span class="nm">1.0</span>)
+    optimizer.<span class="fn">step</span>()
+    timings[<span class="st">'step'</span>] <span class="op">=</span> time.<span class="fn">perf_counter</span>() <span class="op">-</span> t0
+
+    total <span class="op">=</span> <span class="fn">sum</span>(timings.<span class="fn">values</span>())
+    <span class="kw">for</span> k, v <span class="kw">in</span> timings.<span class="fn">items</span>():
+        <span class="fn">print</span>(<span class="st">f"  {k:10s}: {v*1000:6.1f}ms  ({v/total*100:.0f}%)"</span>)
+    <span class="fn">print</span>(<span class="st">f"  {'total':10s}: {total*1000:.1f}ms"</span>)
+
+<span class="cm"># Typical result on Apple M2:
+#   forward  :  85.3ms  (45%)   ← matrix multiplications (expected)
+#   loss     :   2.1ms  ( 1%)
+#   backward : 142.6ms  (76%)   ← backward always ~2x forward (also expected)
+#   step     :  12.4ms  ( 7%)
+# Total: ~190ms per step = ~5 steps/sec with batch=4, seq=64</span></pre>
+</div>
+</div>
+
+<div class="section">
+<h2>Key CPU Optimisations</h2>
+<div class="code-block">
+<div class="code-header"><div class="code-title">cpu_optimisations.py</div><div class="code-label">PERFORMANCE</div></div>
+<pre><span class="kw">import</span> torch
+
+<span class="cm"># 1. Thread count - default often too high on laptops
+# Too many threads → context switching overhead</span>
+torch.<span class="fn">set_num_threads</span>(<span class="nm">4</span>)   <span class="cm"># try 2, 4, 6 - benchmark each</span>
+
+<span class="cm"># 2. BF16 for forward pass - 2x faster matmuls on modern CPUs
+# BF16 = Brain Float 16 - same exponent range as FP32, less precision
+# Supported natively on Intel Ice Lake+, Apple M1+, AMD Zen4+</span>
+<span class="kw">with</span> torch.<span class="fn">autocast</span>(device_type<span class="op">=</span><span class="st">'cpu'</span>, dtype<span class="op">=</span>torch.bfloat16):
+    logits <span class="op">=</span> model(x)   <span class="cm"># runs matmuls in BF16 automatically</span>
+<span class="cm"># Note: only forward pass benefits; backward stays FP32</span>
+
+<span class="cm"># 3. torch.compile - traces the model and compiles to optimised native code
+# One-time compilation cost (~60s), then 20-40% speedup on CPU</span>
+model_compiled <span class="op">=</span> torch.<span class="fn">compile</span>(model, backend<span class="op">=</span><span class="st">'inductor'</span>)
+<span class="cm"># Use model_compiled in the training loop instead of model
+# Note: requires PyTorch 2.0+</span>
+
+<span class="cm"># 4. DataLoader workers - load data in parallel with training
+# On CPU, setting num_workers > 0 can help if data loading is a bottleneck</span>
+loader <span class="op">=</span> <span class="cl">DataLoader</span>(dataset, batch_size<span class="op">=</span><span class="nm">16</span>,
+                     num_workers<span class="op">=</span><span class="nm">2</span>,          <span class="cm"># 2 background threads</span>
+                     pin_memory<span class="op">=</span><span class="kw">False</span>,       <span class="cm"># False for CPU training</span>
+                     persistent_workers<span class="op">=</span><span class="kw">True</span>)  <span class="cm"># reuse worker processes</span>
+
+<span class="cm"># 5. Gradient accumulation - simulate larger batches without more memory
+# Useful if your CPU can't handle batch_size=32 but you want the effect</span>
+accum_steps <span class="op">=</span> <span class="nm">4</span>   <span class="cm"># effective batch = 16 * 4 = 64</span>
+optimizer.<span class="fn">zero_grad</span>()
+<span class="kw">for</span> i, (x, y) <span class="kw">in</span> <span class="fn">enumerate</span>(loader):
+    logits <span class="op">=</span> model(x)
+    loss   <span class="op">=</span> F.<span class="fn">cross_entropy</span>(...) <span class="op">/</span> accum_steps   <span class="cm"># scale loss!</span>
+    loss.<span class="fn">backward</span>()
+    <span class="kw">if</span> (i <span class="op">+</span> <span class="nm">1</span>) <span class="op">%</span> accum_steps <span class="op">==</span> <span class="nm">0</span>:
+        torch.nn.utils.<span class="fn">clip_grad_norm_</span>(model.<span class="fn">parameters</span>(), <span class="nm">1.0</span>)
+        optimizer.<span class="fn">step</span>()
+        optimizer.<span class="fn">zero_grad</span>()</pre>
+</div>
+</div>
+
+<div class="section">
+<h2>Realistic Time Estimates</h2>
+<div style="background:var(--paper);border:1px solid var(--border);padding:20px;margin:16px 0;font-size:12px">
+  <div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px">nanoLlama on TinyShakespeare (~5 epochs)</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <div style="border:1px solid var(--border);padding:12px"><div style="color:var(--muted);font-size:10px;margin-bottom:4px">Modern laptop (M-series / Ryzen)</div><div style="color:var(--text);font-size:14px;font-weight:700">15–25 min</div></div>
+    <div style="border:1px solid var(--border);padding:12px"><div style="color:var(--muted);font-size:10px;margin-bottom:4px">With torch.compile + BF16</div><div style="color:var(--text);font-size:14px;font-weight:700">10–18 min</div></div>
+    <div style="border:1px solid var(--border);padding:12px"><div style="color:var(--muted);font-size:10px;margin-bottom:4px">Older i7/i5 laptop</div><div style="color:var(--text);font-size:14px;font-weight:700">35–55 min</div></div>
+    <div style="border:1px solid var(--border);padding:12px"><div style="color:var(--muted);font-size:10px;margin-bottom:4px">Free Colab CPU</div><div style="color:var(--text);font-size:14px;font-weight:700">20–30 min</div></div>
+  </div>
+</div>
+<div class="callout info">
+<div class="callout-icon">💡</div>
+<div class="callout-text"><strong>Debugging tip:</strong> Run 10 steps first. If loss doesn't drop below 5.0 after 10 steps: check that targets are shifted by 1 (x = tokens[:-1], y = tokens[1:]). If loss is NaN from step 1: check for empty sequences, bad LR, or division by zero in RMSNorm eps.</div>
+</div>
+</div>
+
+<div class="section">
+<h2>What You Now Know</h2>
+<ul class="checklist">
+<li class="done">Profile first - backward is always ~2x forward, that's expected</li>
+<li class="done">torch.set_num_threads(4) often faster than default on laptops</li>
+<li class="done">torch.autocast('cpu', bfloat16) gives 20-40% speedup on modern CPUs</li>
+<li class="done">torch.compile adds one-time cost but speeds up each step significantly</li>
+<li class="done">Gradient accumulation simulates larger batches without extra memory</li>
+</ul>
+</div>
+
+<a href="lesson-14.html" class="next-lesson"><div><div class="next-label">Next Lesson</div><div class="next-title">Lesson 14 - Text Generation & Inference</div></div><div class="next-arrow">→</div></a>
+</div></body></html>

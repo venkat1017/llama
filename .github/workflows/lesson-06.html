@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 06 — Multi-Head Attention | nanoLlama</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,600;1,400&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f0e8;--paper:#fffdf8;--border:#d8cdb8;
+  --ink:#1a1510;--muted:#8a7a60;
+  --r:#c0392b;--b:#1a5276;--g:#1a7a3a;--y:#b7770d;
+  --mono:'IBM Plex Mono',monospace;--serif:'Playfair Display',serif;
+}
+body{background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:14px;line-height:1.7;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:32px 32px;opacity:0.2;pointer-events:none;z-index:0}
+nav{background:var(--paper);border-bottom:2px solid var(--ink);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-brand{font-family:var(--serif);font-size:20px;font-weight:900;color:var(--ink)}
+.nav-brand span{color:var(--r)}
+.nav-lessons{display:flex;gap:3px}
+.nav-lessons a{display:flex;align-items:center;justify-content:center;width:28px;height:28px;font-size:10px;border:1px solid var(--border);color:var(--muted);text-decoration:none;transition:all 0.15s}
+.nav-lessons a.active{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:700}
+.nav-lessons a.done{background:#e8e0d0;border-color:var(--border)}
+.nav-lessons a:hover:not(.active){background:var(--ink);color:#fff}
+.nav-right{font-size:11px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase}
+.hero{padding:64px 40px 40px;max-width:900px;margin:0 auto;position:relative;z-index:1}
+.lesson-badge{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.lesson-badge::before{content:'';width:32px;height:2px;background:var(--ink)}
+h1{font-family:var(--serif);font-size:clamp(36px,5vw,64px);font-weight:900;line-height:1.0;letter-spacing:-0.03em;margin-bottom:12px}
+h1 em{font-style:italic;color:var(--r)}
+.hero-meta{display:flex;gap:24px;font-size:11px;color:var(--muted);margin-bottom:28px}
+.hero-desc{font-size:15px;line-height:1.8;color:#5a4a38;max-width:640px;border-left:3px solid var(--ink);padding-left:20px}
+.main{max-width:900px;margin:0 auto;padding:0 40px 80px;position:relative;z-index:1}
+.section{margin-bottom:56px}
+h2{font-family:var(--serif);font-size:26px;font-weight:700;margin-bottom:20px;padding-bottom:10px;border-bottom:2px solid var(--ink)}
+h3{font-size:12px;font-weight:700;color:var(--r);letter-spacing:0.12em;text-transform:uppercase;margin:24px 0 10px}
+p{color:#3a2e20;line-height:1.8;margin-bottom:14px}
+p strong{color:var(--ink);font-weight:600}
+code{background:#e8dfc8;padding:2px 6px;color:var(--r);font-size:12px;border:1px solid var(--border)}
+.code-block{background:var(--ink);margin:20px 0;overflow:hidden}
+.code-header{background:#0a0806;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #2a2018}
+.code-title{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#7a6a50}
+.code-label{font-size:10px;padding:2px 8px;background:var(--r);color:#fff;font-weight:700}
+pre{padding:20px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.75;color:#d8cdb8}
+.kw{color:#e88060}.fn{color:#7dcfa8}.st{color:#c8e070}.cm{color:#4a3a28;font-style:italic}.nm{color:#f0b050}.cl{color:#a888e8}.op{color:#6a7a8a}
+.concept{background:var(--paper);border:2px solid var(--ink);padding:20px 24px;margin:20px 0;position:relative}
+.concept::before{content:'CONCEPT';position:absolute;top:-10px;left:16px;background:var(--paper);padding:0 8px;font-size:10px;letter-spacing:0.15em;font-weight:700;color:var(--b)}
+.concept p{margin:0;font-size:13px;color:#4a3a28}
+.callout{display:flex;gap:16px;padding:16px 20px;margin:20px 0;border:2px solid}
+.callout.info{border-color:var(--b);background:#f0f5ff}
+.callout.warning{border-color:var(--y);background:#fdf8ee}
+.callout.key{border-color:var(--g);background:#f0fdf4}
+.callout-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.callout-text{font-size:12px;line-height:1.7;color:#3a3828}
+.callout-text strong{color:var(--ink)}
+.heads-diagram{background:var(--paper);border:2px solid var(--ink);padding:24px;margin:20px 0;overflow-x:auto}
+.heads-title{font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:20px;font-weight:700}
+.heads-row{display:flex;gap:8px;margin-bottom:8px;align-items:stretch}
+.head-box{flex:1;min-width:100px;border:2px solid;padding:10px 8px;text-align:center;font-size:11px}
+.head-box.h1{border-color:var(--r);background:#fff5f5;color:var(--r)}
+.head-box.h2{border-color:var(--b);background:#f5f8ff;color:var(--b)}
+.head-box.h3{border-color:var(--g);background:#f5fff8;color:var(--g)}
+.head-box.h4{border-color:var(--y);background:#fffaf0;color:var(--y)}
+.hb-label{font-weight:700;margin-bottom:4px;letter-spacing:0.08em;text-transform:uppercase;font-size:10px}
+.hb-desc{font-size:10px;color:var(--muted);font-style:italic}
+.concat-box{background:var(--ink);color:#fff;padding:12px 20px;text-align:center;font-size:12px;margin:4px 0}
+.proj-box{background:var(--r);color:#fff;padding:10px 20px;text-align:center;font-size:12px}
+.arrow-center{text-align:center;font-size:20px;color:var(--muted);margin:4px 0}
+.shape-tag{display:inline-block;background:#e8dfc8;border:1px solid var(--border);padding:2px 8px;font-size:10px;color:var(--muted);margin-left:8px}
+.checklist{list-style:none;margin:16px 0}
+.checklist li{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;color:#4a3a28}
+.checklist li:last-child{border-bottom:none}
+.checklist li::before{content:'square';font-size:0;width:12px;height:12px;border:2px solid var(--muted);flex-shrink:0;margin-top:3px}
+.checklist li.done::before{background:var(--g);border-color:var(--g)}
+.next-lesson{background:var(--paper);border:2px solid var(--ink);padding:28px;display:flex;align-items:center;justify-content:space-between;margin-top:64px;text-decoration:none;transition:background 0.15s}
+.next-lesson:hover{background:var(--ink)}
+.next-lesson:hover .next-title,.next-lesson:hover .next-label,.next-lesson:hover .next-arrow{color:#fff}
+.next-label{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.next-title{font-family:var(--serif);font-size:20px;font-weight:700;color:var(--ink)}
+.next-arrow{font-size:28px;color:var(--ink)}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-brand">nano<span>Llama</span></div>
+  <div class="nav-lessons">
+    <a href="lesson-01.html" class="done">01</a><a href="lesson-02.html" class="done">02</a>
+    <a href="lesson-03.html" class="done">03</a><a href="lesson-04.html" class="done">04</a>
+    <a href="lesson-05.html" class="done">05</a>
+    <a href="lesson-06.html" class="active">06</a>
+    <a href="lesson-07.html">07</a><a href="lesson-08.html">08</a><a href="lesson-09.html">09</a><a href="lesson-10.html">10</a>
+    <a href="#">11</a><a href="#">12</a><a href="#">13</a><a href="#">14</a><a href="#">15</a>
+  </div>
+  <div class="nav-right">CPU · Pure PyTorch</div>
+</nav>
+<div class="hero">
+  <div class="lesson-badge">Lesson 06 of 15</div>
+  <h1>Multi-Head<br><em>Attention</em></h1>
+  <div class="hero-meta">
+    <span>&#9200; ~70 min</span>
+    <span>&#128256; Parallelism</span>
+    <span>&#128187; CPU only</span>
+  </div>
+  <p class="hero-desc">Single-head attention can only look at tokens from one perspective at a time. Multi-head attention runs <strong>several heads in parallel</strong>, each learning to focus on different relationships — syntax, coreference, semantics. Then it merges all perspectives.</p>
+</div>
+<div class="main">
+  <div class="section">
+    <h2>Why Multiple Heads?</h2>
+    <p>Consider understanding: <em>"The animal didn't cross the street because it was too tired."</em> To understand "it" refers to "animal" you need coreference tracking. But also syntax (subject-verb) and semantics (what "tired" implies). One head learns one kind of attention pattern. Multiple heads learn multiple patterns simultaneously.</p>
+    <p>With <strong>n_heads</strong> heads, each head operates on a smaller subspace: <code>d_head = d_model / n_heads</code>. Their outputs are concatenated and projected back to <code>d_model</code>. Total computation cost is identical to one big head — just split differently.</p>
+    <div class="heads-diagram">
+      <div class="heads-title">Multi-head attention: 4 heads in parallel, nanoLlama config</div>
+      <div style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:16px">Input x [B, S, 64] is split: each head gets 16 dimensions</div>
+      <div class="heads-row">
+        <div class="head-box h1"><div class="hb-label">Head 1</div><div class="hb-desc">learns syntax<br>subject→verb</div><div style="margin-top:6px;font-size:10px">[B, S, 16]</div></div>
+        <div class="head-box h2"><div class="hb-label">Head 2</div><div class="hb-desc">learns coreference<br>pronoun→noun</div><div style="margin-top:6px;font-size:10px">[B, S, 16]</div></div>
+        <div class="head-box h3"><div class="hb-label">Head 3</div><div class="hb-desc">learns locality<br>nearby tokens</div><div style="margin-top:6px;font-size:10px">[B, S, 16]</div></div>
+        <div class="head-box h4"><div class="hb-label">Head 4</div><div class="hb-desc">learns semantics<br>topic clusters</div><div style="margin-top:6px;font-size:10px">[B, S, 16]</div></div>
+      </div>
+      <div class="arrow-center">&#8595; concatenate along last dim</div>
+      <div class="concat-box">Concat(head1, head2, head3, head4) <span class="shape-tag" style="background:#1a1510;border-color:#3a2a18;color:#9a8a68">[B, S, 64]</span></div>
+      <div class="arrow-center">&#8595; output projection W_O</div>
+      <div class="proj-box">Output — same shape as input [B, S, 64]</div>
+    </div>
+    <div class="concept"><p>Key constraint: <code>n_heads x d_head = d_model</code>. Our nanoLlama: d_model=64, n_heads=4, d_head=16. The assert in __init__ enforces this. Never skip it.</p></div>
+  </div>
+
+  <div class="section">
+    <h2>The Reshape Trick — Efficient Parallel Heads</h2>
+    <p>Naive implementation: loop over heads one by one (slow). Efficient implementation: reshape tensors so all heads run as a <strong>single batched matrix multiply</strong>. This is the trick every production transformer uses.</p>
+    <div class="code-block">
+      <div class="code-header"><div class="code-title">reshape_trick.py</div><div class="code-label">KEY INSIGHT</div></div>
+<pre><span class="kw">import</span> torch
+
+B, S, D   <span class="op">=</span> <span class="nm">2</span>, <span class="nm">8</span>, <span class="nm">64</span>
+n_heads   <span class="op">=</span> <span class="nm">4</span>
+d_head    <span class="op">=</span> D <span class="op">//</span> n_heads   <span class="cm"># = 16</span>
+
+<span class="cm"># After the QKV projection we have Q of shape [B, S, D]</span>
+Q_full <span class="op">=</span> torch.<span class="fn">randn</span>(B, S, D)
+
+<span class="cm"># Step 1: view as (B, S, n_heads, d_head)</span>
+Q_reshaped <span class="op">=</span> Q_full.<span class="fn">view</span>(B, S, n_heads, d_head)
+<span class="fn">print</span>(Q_reshaped.shape)   <span class="cm"># [2, 8, 4, 16]</span>
+
+<span class="cm"># Step 2: transpose so heads sit in dim-1 (treated as batch dimension)
+# We want (B, n_heads, S, d_head) so matmul sees (n_heads, S, d_head)</span>
+Q_heads <span class="op">=</span> Q_reshaped.<span class="fn">transpose</span>(<span class="nm">1</span>, <span class="nm">2</span>)
+<span class="fn">print</span>(Q_heads.shape)      <span class="cm"># [2, 4, 8, 16] = (B, heads, S, d_head)</span>
+
+<span class="cm"># PyTorch batched matmul now treats (B, heads) as independent batch dims.
+# Q @ K.T: (B, H, S, d_h) @ (B, H, d_h, S) -> (B, H, S, S)
+# All 4 heads computed at once — no loop needed!</span>
+K_heads <span class="op">=</span> torch.<span class="fn">randn</span>(B, n_heads, S, d_head)
+scores  <span class="op">=</span> Q_heads <span class="op">@</span> K_heads.<span class="fn">transpose</span>(<span class="op">-</span><span class="nm">2</span>, <span class="op">-</span><span class="nm">1</span>)
+<span class="fn">print</span>(scores.shape)       <span class="cm"># [2, 4, 8, 8] = (B, heads, S, S)</span>
+
+<span class="cm"># After attention, reverse the reshape:
+# (B, H, S, d_h) -> transpose -> (B, S, H, d_h) -> view -> (B, S, D)</span>
+out <span class="op">=</span> torch.<span class="fn">randn</span>(B, n_heads, S, d_head)
+out <span class="op">=</span> out.<span class="fn">transpose</span>(<span class="nm">1</span>, <span class="nm">2</span>).<span class="fn">contiguous</span>().<span class="fn">view</span>(B, S, D)
+<span class="fn">print</span>(out.shape)           <span class="cm"># [2, 8, 64] = (B, S, D) — heads merged!</span>
+
+<span class="cm"># .contiguous() is REQUIRED before .view() after .transpose()
+# Transpose changes stride metadata but not memory layout;
+# .view() needs contiguous memory — always add it.</span></pre>
+    </div>
+    <div class="callout warning">
+      <div class="callout-icon">&#9888;</div>
+      <div class="callout-text"><strong>The .contiguous() trap.</strong> After <code>.transpose()</code>, tensor memory is non-contiguous. <code>.view()</code> requires contiguous layout. Always call <code>.contiguous()</code> before <code>.view()</code> after a transpose. Alternatively use <code>.reshape()</code> which handles this automatically (but may copy data).</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Complete Multi-Head Attention Module</h2>
+    <div class="code-block">
+      <div class="code-header"><div class="code-title">multi_head_attention.py</div><div class="code-label">FINAL CODE</div></div>
+<pre><span class="kw">import</span> torch
+<span class="kw">import</span> torch.nn <span class="kw">as</span> nn
+<span class="kw">import</span> torch.nn.functional <span class="kw">as</span> F
+<span class="kw">import</span> math
+
+<span class="kw">class</span> <span class="cl">MultiHeadAttention</span>(nn.Module):
+    <span class="st">"""Causal multi-head self-attention. nanoLlama: d_model=64, n_heads=4."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, d_model: <span class="fn">int</span>, n_heads: <span class="fn">int</span>):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        <span class="kw">assert</span> d_model <span class="op">%</span> n_heads <span class="op">==</span> <span class="nm">0</span>
+
+        self.d_model <span class="op">=</span> d_model
+        self.n_heads <span class="op">=</span> n_heads
+        self.d_head  <span class="op">=</span> d_model <span class="op">//</span> n_heads   <span class="cm"># 64//4 = 16</span>
+        self.scale   <span class="op">=</span> math.<span class="fn">sqrt</span>(self.d_head)
+
+        <span class="cm"># One combined QKV projection — 3x more efficient than 3 separate layers</span>
+        self.qkv_proj <span class="op">=</span> nn.<span class="cl">Linear</span>(d_model, <span class="nm">3</span> <span class="op">*</span> d_model, bias<span class="op">=</span><span class="kw">False</span>)
+        self.out_proj <span class="op">=</span> nn.<span class="cl">Linear</span>(d_model, d_model, bias<span class="op">=</span><span class="kw">False</span>)
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x: torch.<span class="cl">Tensor</span>) <span class="op">-&gt;</span> torch.<span class="cl">Tensor</span>:
+        B, S, D <span class="op">=</span> x.shape
+
+        <span class="cm"># 1. Project: (B,S,D) -> (B,S,3D) -> split into three (B,S,D)</span>
+        q, k, v <span class="op">=</span> self.<span class="fn">qkv_proj</span>(x).<span class="fn">chunk</span>(<span class="nm">3</span>, dim<span class="op">=-</span><span class="nm">1</span>)
+
+        <span class="cm"># 2. Reshape for multi-head: (B,S,D) -> (B,H,S,d_h)</span>
+        <span class="kw">def</span> <span class="fn">split_heads</span>(t):
+            <span class="kw">return</span> t.<span class="fn">view</span>(B, S, self.n_heads, self.d_head).<span class="fn">transpose</span>(<span class="nm">1</span>, <span class="nm">2</span>)
+
+        q, k, v <span class="op">=</span> <span class="fn">split_heads</span>(q), <span class="fn">split_heads</span>(k), <span class="fn">split_heads</span>(v)
+        <span class="cm"># q,k,v: (B, 4, S, 16)</span>
+
+        <span class="cm"># 3. Scaled dot-product attention (all heads batched)</span>
+        scores <span class="op">=</span> (q <span class="op">@</span> k.<span class="fn">transpose</span>(<span class="op">-</span><span class="nm">2</span>, <span class="op">-</span><span class="nm">1</span>)) <span class="op">/</span> self.scale   <span class="cm"># (B, 4, S, S)</span>
+
+        mask   <span class="op">=</span> torch.<span class="fn">triu</span>(torch.<span class="fn">ones</span>(S, S, device<span class="op">=</span>x.device, dtype<span class="op">=</span>torch.bool), diagonal<span class="op">=</span><span class="nm">1</span>)
+        scores <span class="op">=</span> scores.<span class="fn">masked_fill</span>(mask, <span class="fn">float</span>(<span class="st">'-inf'</span>))
+        attn   <span class="op">=</span> F.<span class="fn">softmax</span>(scores, dim<span class="op">=-</span><span class="nm">1</span>)          <span class="cm"># (B, 4, S, S)</span>
+        out    <span class="op">=</span> attn <span class="op">@</span> v                              <span class="cm"># (B, 4, S, 16)</span>
+
+        <span class="cm"># 4. Merge heads: (B,H,S,d_h) -> (B,S,D)</span>
+        out <span class="op">=</span> out.<span class="fn">transpose</span>(<span class="nm">1</span>, <span class="nm">2</span>).<span class="fn">contiguous</span>().<span class="fn">view</span>(B, S, D)
+
+        <span class="cm"># 5. Output projection</span>
+        <span class="kw">return</span> self.<span class="fn">out_proj</span>(out)   <span class="cm"># (B, S, 64)</span>
+
+<span class="cm"># --- Test ---</span>
+mha <span class="op">=</span> <span class="cl">MultiHeadAttention</span>(d_model<span class="op">=</span><span class="nm">64</span>, n_heads<span class="op">=</span><span class="nm">4</span>)
+x   <span class="op">=</span> torch.<span class="fn">randn</span>(<span class="nm">4</span>, <span class="nm">64</span>, <span class="nm">64</span>)
+out <span class="op">=</span> mha(x)
+<span class="fn">print</span>(out.shape)   <span class="cm"># torch.Size([4, 64, 64])</span>
+
+params <span class="op">=</span> <span class="fn">sum</span>(p.<span class="fn">numel</span>() <span class="kw">for</span> p <span class="kw">in</span> mha.<span class="fn">parameters</span>())
+<span class="fn">print</span>(<span class="st">f"MHA params: {params:,}"</span>)   <span class="cm"># 16,384</span></pre>
+    </div>
+
+    <h3>Shape Drill — Every Tensor</h3>
+    <div class="code-block">
+      <div class="code-header"><div class="code-title">shape_drill_06.py</div><div class="code-label">SHAPES</div></div>
+<pre><span class="cm"># B=4, S=64, D=64, H=4 heads, d_h=16</span>
+<span class="cm"># x            [4,  64,  64]   input</span>
+<span class="cm"># qkv          [4,  64, 192]   after qkv_proj  (192 = 3*64)</span>
+<span class="cm"># q, k, v      [4,  64,  64]   each, after chunk(3, dim=-1)</span>
+<span class="cm"># q (heads)    [4,   4,  64, 16]  after view + transpose(1,2)</span>
+<span class="cm"># scores       [4,   4,  64, 64]  q @ k.T  -- one matrix per head</span>
+<span class="cm"># attn         [4,   4,  64, 64]  after masked softmax</span>
+<span class="cm"># out (heads)  [4,   4,  64, 16]  attn @ v</span>
+<span class="cm"># out (merged) [4,  64,  64]   after transpose(1,2).view(B,S,D)</span>
+<span class="cm"># output       [4,  64,  64]   after out_proj  -- same as input</span></pre>
+    </div>
+
+    <div class="callout key">
+      <div class="callout-icon">&#10003;</div>
+      <div class="callout-text"><strong>scores is [B, H, S, S]</strong> — we have H independent attention matrices, one per head. Each head puts its attention mass in different places. Head 1 might attend locally; head 3 might attend to distant tokens. The model learns this freely.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>What You Now Know</h2>
+    <ul class="checklist">
+      <li class="done">Multi-head runs H heads in parallel, each on d_head = d_model/H dims</li>
+      <li class="done">Reshape trick: treat heads as a batch dim for one big batched matmul</li>
+      <li class="done">Combined QKV projection more efficient than 3 separate Linears</li>
+      <li class="done">.contiguous() required before .view() after .transpose()</li>
+      <li class="done">MHA is shape-preserving: [B, S, D] in, [B, S, D] out</li>
+      <li>What comes after attention in each transformer block? (next lesson)</li>
+    </ul>
+  </div>
+  <a href="lesson-07.html" class="next-lesson">
+    <div><div class="next-label">Next Lesson</div><div class="next-title">Lesson 07 — Feed-Forward Block &amp; RMSNorm</div></div>
+    <div class="next-arrow">&#8594;</div>
+  </a>
+</div>
+</body>
+</html>

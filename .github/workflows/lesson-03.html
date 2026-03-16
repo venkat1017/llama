@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 03 — Dataset: Tokenization & Vocabulary | nanoLlama</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Fraunces:ital,wght@0,300;0,700;0,900;1,300;1,700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d14;--paper:#12121e;--border:#1e1e30;
+  --accent:#a78bfa;--accent2:#60a5fa;--accent3:#f472b6;
+  --text:#e0dff0;--muted:#5a5872;
+  --mono:'JetBrains Mono',monospace;--serif:'Fraunces',serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;line-height:1.7;min-height:100vh}
+nav{background:var(--paper);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-brand{font-family:var(--serif);font-size:18px;font-weight:900;color:var(--accent);letter-spacing:-0.02em}
+.nav-brand span{color:var(--text);font-weight:300}
+.nav-lessons{display:flex;gap:4px}
+.nav-lessons a{display:flex;align-items:center;justify-content:center;width:28px;height:28px;font-size:10px;border:1px solid var(--border);color:var(--muted);text-decoration:none;transition:all 0.15s}
+.nav-lessons a.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700}
+.nav-lessons a.done{border-color:#2a1a4a;color:#5a3a8a}
+.nav-lessons a:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+.nav-right{font-size:11px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase}
+.hero{padding:64px 32px 48px;max-width:860px;margin:0 auto}
+.lesson-badge{display:inline-flex;align-items:center;gap:8px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:20px}
+.lesson-badge::before{content:'';width:24px;height:1px;background:var(--accent)}
+h1{font-family:var(--serif);font-size:clamp(32px,5vw,52px);font-weight:900;line-height:1.05;letter-spacing:-0.03em;margin-bottom:16px}
+h1 em{font-style:italic;color:var(--accent)}
+.hero-meta{display:flex;gap:20px;font-size:11px;color:var(--muted);margin-bottom:32px;letter-spacing:0.05em}
+.hero-desc{font-size:15px;line-height:1.8;color:#9890c0;max-width:640px;border-left:2px solid var(--accent);padding-left:20px}
+.main{max-width:860px;margin:0 auto;padding:0 32px 80px}
+.section{margin-bottom:56px}
+h2{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--text);margin-bottom:20px;display:flex;align-items:center;gap:12px}
+h2::after{content:'';flex:1;height:1px;background:var(--border)}
+h3{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:0.08em;text-transform:uppercase;margin:24px 0 10px}
+p{color:#9890c0;line-height:1.8;margin-bottom:14px}
+p strong{color:var(--text);font-weight:500}
+code{background:#0a0a18;padding:2px 6px;color:var(--accent);font-size:12px}
+.code-block{background:#08080f;border:1px solid var(--border);border-left:3px solid var(--accent);margin:20px 0;overflow:hidden}
+.code-header{background:#0e0e1a;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.code-title{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+.code-label{font-size:10px;padding:2px 8px;background:var(--accent);color:#000;font-weight:700;letter-spacing:0.05em}
+pre{padding:20px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7}
+.kw{color:#c084fc}.fn{color:#7dd3fc}.st{color:#86efac}.cm{color:#2a284a;font-style:italic}.nm{color:#a78bfa}.cl{color:#f472b6}.op{color:#64748b}
+.concept{background:var(--paper);border:1px solid var(--border);padding:20px 24px;margin:20px 0}
+.concept-title{font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent2);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.concept-title::before{content:'◆';font-size:8px}
+.concept p{margin:0;font-size:13px;color:#7870a0}
+.callout{display:flex;gap:16px;padding:16px 20px;margin:20px 0;border:1px solid}
+.callout.info{border-color:#1a1a4a;background:#05050f}
+.callout.warning{border-color:#3a2a1a;background:#0f0a04}
+.callout.success{border-color:#1a3a1a;background:#040f04}
+.callout-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.callout-text{font-size:12px;line-height:1.7;color:#7870a0}
+.callout-text strong{color:var(--text)}
+
+/* TOKEN VISUALIZATION */
+.token-vis{margin:20px 0}
+.token-stream{display:flex;flex-wrap:wrap;gap:4px;padding:16px;background:#08080f;border:1px solid var(--border)}
+.token{padding:4px 8px;font-size:12px;font-family:var(--mono);border:1px solid}
+.t-word{border-color:#3a2a5a;background:#12101e;color:#c084fc}
+.t-space{border-color:#2a2a1a;background:#100f08;color:#7a7860;font-size:10px}
+.t-punct{border-color:#3a1a2a;background:#160a10;color:#f472b6}
+.t-num{border-color:#1a3a1a;background:#081008;color:#86efac}
+.token-idx{font-size:9px;color:var(--muted);display:block;text-align:center;margin-top:2px}
+
+/* VOCAB TABLE */
+.vocab-table{width:100%;border-collapse:collapse;font-size:12px;margin:16px 0}
+.vocab-table th{background:#0e0e1a;padding:8px 12px;text-align:left;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);font-weight:500}
+.vocab-table td{padding:8px 12px;border-bottom:1px solid #0e0e18;color:#9890c0}
+.vocab-table tr:hover td{background:#0e0e18}
+.vocab-table td:first-child{color:var(--accent);font-weight:500}
+.vocab-table td code{background:#0a0a18;padding:2px 6px;font-size:11px}
+
+.checklist{list-style:none;margin:16px 0}
+.checklist li{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #0e0e18;font-size:13px;color:#7870a0}
+.checklist li:last-child{border-bottom:none}
+.checklist li::before{content:'○';color:var(--muted);flex-shrink:0}
+.checklist li.done::before{content:'●';color:var(--accent)}
+.next-lesson{background:var(--paper);border:1px solid var(--border);padding:28px;display:flex;align-items:center;justify-content:space-between;margin-top:64px;text-decoration:none}
+.next-lesson:hover{border-color:var(--accent)}
+.next-label{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.next-title{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--text)}
+.next-arrow{font-size:24px;color:var(--accent)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">nano<span>Llama</span></div>
+  <div class="nav-lessons">
+    <a href="lesson-01.html" class="done">01</a>
+    <a href="lesson-02.html" class="done">02</a>
+    <a href="lesson-03.html" class="active">03</a>
+    <a href="lesson-04.html">04</a><a href="lesson-05.html">05</a>
+    <a href="#">06</a><a href="#">07</a><a href="#">08</a><a href="#">09</a><a href="#">10</a>
+    <a href="#">11</a><a href="#">12</a><a href="#">13</a><a href="#">14</a><a href="#">15</a>
+  </div>
+  <div class="nav-right">CPU · Pure PyTorch</div>
+</nav>
+
+<div class="hero">
+  <div class="lesson-badge">Lesson 03 of 15</div>
+  <h1>Dataset: <em>Tokenization</em><br>& Vocabulary</h1>
+  <div class="hero-meta">
+    <span>⏱ ~50 min</span>
+    <span>📦 Data Pipeline</span>
+    <span>💻 CPU only</span>
+  </div>
+  <p class="hero-desc">
+    Neural networks eat numbers — not words. Tokenization is the bridge between raw text and tensors. We'll build a <strong>byte-level tokenizer from scratch</strong>, create our training dataset from a tiny text file, and build the PyTorch DataLoader pipeline that will feed our nanoLlama.
+  </p>
+</div>
+
+<div class="main">
+
+  <div class="section">
+    <h2>What is Tokenization?</h2>
+    <p>Tokenization splits text into <strong>tokens</strong> — the atomic units your model reads. Each token gets a unique integer ID. The model never sees the actual characters, only integers. After processing, those integers get projected back into text.</p>
+
+    <div class="token-vis">
+      <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Example: "Hello world!" → tokens → integer IDs</div>
+      <div class="token-stream">
+        <div><div class="token t-word">Hello</div><div class="token-idx">72</div></div>
+        <div><div class="token t-space">·</div><div class="token-idx">32</div></div>
+        <div><div class="token t-word">world</div><div class="token-idx">119</div></div>
+        <div><div class="token t-punct">!</div><div class="token-idx">33</div></div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px">→ [72, 32, 119, 33] — a list of integers your model can process</div>
+    </div>
+
+    <p>For our nanoLlama, we'll use <strong>byte-level tokenization</strong>: each byte of the UTF-8 encoded text becomes one token. This gives us a vocabulary of exactly <strong>256 tokens</strong> (0–255) with zero preprocessing. No special tokens, no BPE merges — just bytes.</p>
+
+    <div class="concept">
+      <div class="concept-title">Why byte-level for our project?</div>
+      <p>Real models (GPT-4, Llama) use Byte-Pair Encoding (BPE) with 32K–128K tokens — more efficient for long texts. For CPU training, 256 tokens is perfect: tiny vocabulary = tiny embedding table = fast training. The concepts are identical; only vocabulary size changes.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Our Dataset: TinyShakespeare</h2>
+    <p>We'll train on the classic "TinyShakespeare" dataset — ~1MB of Shakespeare's plays. It's small enough to train on CPU in minutes, varied enough to produce interesting outputs, and the same dataset Karpathy used in nanoGPT.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-title">download_data.py — get the dataset</div>
+        <div class="code-label">RUN THIS FIRST</div>
+      </div>
+<pre><span class="kw">import</span> urllib.request
+<span class="kw">import</span> os
+
+<span class="cm"># Download TinyShakespeare (~1MB, no extra libraries needed)</span>
+url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt"</span>
+
+<span class="kw">if</span> <span class="kw">not</span> os.path.<span class="fn">exists</span>(<span class="st">"input.txt"</span>):
+    urllib.request.<span class="fn">urlretrieve</span>(url, <span class="st">"input.txt"</span>)
+    <span class="fn">print</span>(<span class="st">"Downloaded input.txt"</span>)
+
+<span class="kw">with</span> <span class="fn">open</span>(<span class="st">"input.txt"</span>, <span class="st">"r"</span>) <span class="kw">as</span> f:
+    text <span class="op">=</span> f.<span class="fn">read</span>()
+
+<span class="fn">print</span>(<span class="st">f"Total characters: {len(text):,}"</span>)    <span class="cm"># ~1,115,394</span>
+<span class="fn">print</span>(<span class="st">f"First 200 chars:"</span>)
+<span class="fn">print</span>(text[:<span class="nm">200</span>])
+<span class="cm"># First Citizen:
+# Before we proceed any further, hear me speak.
+# ...</span></pre>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Building the Byte-Level Tokenizer</h2>
+    <p>Our tokenizer needs just two functions: <strong>encode</strong> (text → integers) and <strong>decode</strong> (integers → text). Since we're using bytes, the "vocabulary" is the 256 possible byte values.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-title">tokenizer.py — complete byte-level tokenizer</div>
+        <div class="code-label">CORE CODE</div>
+      </div>
+<pre><span class="kw">import</span> torch
+
+<span class="kw">class</span> <span class="cl">ByteTokenizer</span>:
+    <span class="st">"""Byte-level tokenizer. Vocabulary = 256 (all possible bytes).
+    No special tokens. Text → bytes → integers.
+    """</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self.vocab_size <span class="op">=</span> <span class="nm">256</span>
+        <span class="cm"># Vocabulary is implicit: token_id == byte_value</span>
+        <span class="cm"># Token 65 = ASCII 'A', Token 97 = 'a', Token 32 = ' ', etc.</span>
+
+    <span class="kw">def</span> <span class="fn">encode</span>(self, text: <span class="fn">str</span>) <span class="op">-&gt;</span> <span class="fn">list</span>[<span class="fn">int</span>]:
+        <span class="st">"""Convert text string to list of integer token IDs."""</span>
+        <span class="cm"># text.encode('utf-8') → bytes object
+        # list(...) → list of integers (0-255)</span>
+        <span class="kw">return</span> <span class="fn">list</span>(text.<span class="fn">encode</span>(<span class="st">'utf-8'</span>))
+
+    <span class="kw">def</span> <span class="fn">decode</span>(self, ids: <span class="fn">list</span>[<span class="fn">int</span>]) <span class="op">-&gt;</span> <span class="fn">str</span>:
+        <span class="st">"""Convert list of integer token IDs back to text."""</span>
+        <span class="cm"># bytes(ids) → bytes object
+        # .decode('utf-8', errors='replace') → handles any invalid bytes</span>
+        <span class="kw">return</span> <span class="fn">bytes</span>(ids).<span class="fn">decode</span>(<span class="st">'utf-8'</span>, errors<span class="op">=</span><span class="st">'replace'</span>)
+
+    <span class="kw">def</span> <span class="fn">encode_tensor</span>(self, text: <span class="fn">str</span>) <span class="op">-&gt;</span> torch.<span class="cl">Tensor</span>:
+        <span class="st">"""Encode text directly to a PyTorch tensor of int64."""</span>
+        <span class="kw">return</span> torch.<span class="fn">tensor</span>(self.<span class="fn">encode</span>(text), dtype<span class="op">=</span>torch.int64)
+
+
+<span class="cm"># ── Test it ──────────────────────────────────────────────────</span>
+tokenizer <span class="op">=</span> <span class="cl">ByteTokenizer</span>()
+
+text <span class="op">=</span> <span class="st">"Hello, World!"</span>
+ids  <span class="op">=</span> tokenizer.<span class="fn">encode</span>(text)
+back <span class="op">=</span> tokenizer.<span class="fn">decode</span>(ids)
+
+<span class="fn">print</span>(<span class="st">f"Text:    '{text}'"</span>)
+<span class="fn">print</span>(<span class="st">f"IDs:     {ids}"</span>)
+<span class="cm"># [72, 101, 108, 108, 111, 44, 32, 87, 111, 114, 108, 100, 33]</span>
+<span class="fn">print</span>(<span class="st">f"Decoded: '{back}'"</span>)     <span class="cm"># 'Hello, World!' ✓</span>
+<span class="fn">print</span>(<span class="st">f"Vocab size: {tokenizer.vocab_size}"</span>)  <span class="cm"># 256</span>
+
+<span class="cm"># Inspect individual tokens</span>
+<span class="kw">for</span> char, id_ <span class="kw">in</span> <span class="fn">zip</span>(text, ids):
+    <span class="fn">print</span>(<span class="st">f"  '{char}' → {id_} (0x{id_:02x})"</span>)
+<span class="cm"># 'H' → 72 (0x48)
+# 'e' → 101 (0x65)
+# 'l' → 108 (0x6c)  ...</span></pre>
+    </div>
+
+    <h3>Vocabulary Sample</h3>
+    <table class="vocab-table">
+      <thead>
+        <tr><th>Token ID</th><th>Byte (hex)</th><th>Character</th><th>Category</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>32</td><td><code>0x20</code></td><td>space</td><td>Whitespace</td></tr>
+        <tr><td>65–90</td><td><code>0x41–0x5A</code></td><td>A–Z</td><td>Uppercase letters</td></tr>
+        <tr><td>97–122</td><td><code>0x61–0x7A</code></td><td>a–z</td><td>Lowercase letters</td></tr>
+        <tr><td>48–57</td><td><code>0x30–0x39</code></td><td>0–9</td><td>Digits</td></tr>
+        <tr><td>10</td><td><code>0x0A</code></td><td>\n</td><td>Newline</td></tr>
+        <tr><td>128–255</td><td><code>0x80–0xFF</code></td><td>(multi-byte UTF-8)</td><td>Non-ASCII</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Building the Dataset & DataLoader</h2>
+    <p>Now we need to create training examples from our tokenized text. The key insight: for a <strong>language model</strong>, every position is simultaneously an input AND a target. Given tokens [t₀, t₁, t₂, t₃], we train the model to predict t₁ from t₀, t₂ from [t₀,t₁], t₃ from [t₀,t₁,t₂], and so on.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-title">dataset.py — sliding window dataset for language modeling</div>
+        <div class="code-label">FULL PIPELINE</div>
+      </div>
+<pre><span class="kw">import</span> torch
+<span class="kw">from</span> torch.utils.data <span class="kw">import</span> Dataset, DataLoader
+
+<span class="kw">class</span> <span class="cl">TextDataset</span>(Dataset):
+    <span class="st">"""
+    Sliding window dataset for next-token prediction.
+
+    Given a token sequence of length N, we create examples of:
+      input:  tokens[i : i+seq_len]
+      target: tokens[i+1 : i+seq_len+1]  ← shifted by 1
+
+    The model learns: given these tokens, predict the next one.
+    """</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, token_ids: torch.<span class="cl">Tensor</span>, seq_len: <span class="fn">int</span>):
+        self.data    <span class="op">=</span> token_ids
+        self.seq_len <span class="op">=</span> seq_len
+
+    <span class="kw">def</span> <span class="fn">__len__</span>(self) <span class="op">-&gt;</span> <span class="fn">int</span>:
+        <span class="cm"># How many windows fit? N - seq_len (we need 1 extra for target)</span>
+        <span class="kw">return</span> <span class="fn">len</span>(self.data) <span class="op">-</span> self.seq_len
+
+    <span class="kw">def</span> <span class="fn">__getitem__</span>(self, idx: <span class="fn">int</span>):
+        <span class="cm"># Input: seq_len tokens starting at idx</span>
+        x <span class="op">=</span> self.data[idx : idx <span class="op">+</span> self.seq_len]
+        <span class="cm"># Target: same window shifted right by 1 (next token at each position)</span>
+        y <span class="op">=</span> self.data[idx <span class="op">+</span> <span class="nm">1</span> : idx <span class="op">+</span> self.seq_len <span class="op">+</span> <span class="nm">1</span>]
+        <span class="kw">return</span> x, y
+
+
+<span class="cm"># ── Build the full pipeline ───────────────────────────────────</span>
+<span class="kw">from</span> tokenizer <span class="kw">import</span> ByteTokenizer  <span class="cm"># from previous step</span>
+
+<span class="cm"># Load and tokenize text</span>
+<span class="kw">with</span> <span class="fn">open</span>(<span class="st">"input.txt"</span>, <span class="st">"r"</span>) <span class="kw">as</span> f:
+    text <span class="op">=</span> f.<span class="fn">read</span>()
+
+tokenizer <span class="op">=</span> <span class="cl">ByteTokenizer</span>()
+all_ids   <span class="op">=</span> tokenizer.<span class="fn">encode_tensor</span>(text)
+<span class="fn">print</span>(<span class="st">f"Total tokens: {len(all_ids):,}"</span>)   <span class="cm"># ~1,115,394</span>
+
+<span class="cm"># Split 90% train / 10% validation</span>
+n          <span class="op">=</span> <span class="fn">len</span>(all_ids)
+split      <span class="op">=</span> <span class="fn">int</span>(n <span class="op">*</span> <span class="nm">0.9</span>)
+train_ids  <span class="op">=</span> all_ids[:split]
+val_ids    <span class="op">=</span> all_ids[split:]
+
+<span class="cm"># Our nanoLlama config (CPU-friendly)</span>
+seq_len    <span class="op">=</span> <span class="nm">64</span>    <span class="cm"># context window (64 tokens)</span>
+batch_size <span class="op">=</span> <span class="nm">16</span>    <span class="cm"># 16 sequences per batch</span>
+
+<span class="cm"># Create Dataset objects</span>
+train_ds <span class="op">=</span> <span class="cl">TextDataset</span>(train_ids, seq_len)
+val_ds   <span class="op">=</span> <span class="cl">TextDataset</span>(val_ids, seq_len)
+
+<span class="fn">print</span>(<span class="st">f"Train examples: {len(train_ds):,}"</span>)  <span class="cm"># ~1,003,854</span>
+<span class="fn">print</span>(<span class="st">f"Val examples:   {len(val_ds):,}"</span>)    <span class="cm"># ~111,529</span>
+
+<span class="cm"># Create DataLoaders (handles batching, shuffling)</span>
+train_loader <span class="op">=</span> <span class="cl">DataLoader</span>(
+    train_ds,
+    batch_size<span class="op">=</span>batch_size,
+    shuffle<span class="op">=</span><span class="kw">True</span>,       <span class="cm"># shuffle for training!</span>
+    drop_last<span class="op">=</span><span class="kw">True</span>,      <span class="cm"># avoid partial batches</span>
+)
+val_loader <span class="op">=</span> <span class="cl">DataLoader</span>(val_ds, batch_size<span class="op">=</span>batch_size, shuffle<span class="op">=</span><span class="kw">False</span>)
+
+<span class="cm"># ── Inspect a batch ──────────────────────────────────────────</span>
+x_batch, y_batch <span class="op">=</span> <span class="fn">next</span>(<span class="fn">iter</span>(train_loader))
+<span class="fn">print</span>(<span class="st">f"x_batch shape: {x_batch.shape}"</span>)   <span class="cm"># [16, 64]</span>
+<span class="fn">print</span>(<span class="st">f"y_batch shape: {y_batch.shape}"</span>)   <span class="cm"># [16, 64]</span>
+
+<span class="cm"># Look at first sequence in batch</span>
+x0 <span class="op">=</span> x_batch[<span class="nm">0</span>]  <span class="cm"># shape: (64,)</span>
+y0 <span class="op">=</span> y_batch[<span class="nm">0</span>]  <span class="cm"># shape: (64,)</span>
+
+<span class="fn">print</span>(<span class="st">"\nFirst sequence (input):"</span>)
+<span class="fn">print</span>(tokenizer.<span class="fn">decode</span>(x0.<span class="fn">tolist</span>()))  <span class="cm"># a snippet of Shakespeare</span>
+<span class="fn">print</span>(<span class="st">"\nTarget (shifted by 1):"</span>)
+<span class="fn">print</span>(tokenizer.<span class="fn">decode</span>(y0.<span class="fn">tolist</span>()))  <span class="cm"># same snippet, offset by 1 char</span>
+
+<span class="cm"># Notice: target[i] = input[i+1]. Model learns to predict the next token.</span></pre>
+    </div>
+
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-text"><strong>Why shift by 1?</strong> At position <em>i</em>, the model sees tokens 0…i and must predict token <em>i+1</em>. We process all positions in parallel during training — that's what the "causal mask" in attention enforces. We'll build that in Lesson 05.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Understanding What We Just Built</h2>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-title">data_inspection.py — visualize the input/target relationship</div>
+        <div class="code-label">INTUITION</div>
+      </div>
+<pre><span class="kw">import</span> torch
+
+<span class="cm"># Example: tiny text "ABCDE"</span>
+text   <span class="op">=</span> <span class="st">"ABCDE"</span>
+ids    <span class="op">=</span> [<span class="nm">65</span>, <span class="nm">66</span>, <span class="nm">67</span>, <span class="nm">68</span>, <span class="nm">69</span>]  <span class="cm"># A=65, B=66, etc.</span>
+seq_len <span class="op">=</span> <span class="nm">3</span>
+
+<span class="cm"># With seq_len=3, we get these (input, target) pairs:</span>
+<span class="cm"># idx=0: input=[A,B,C]  target=[B,C,D]  (predict B from A, C from AB, D from ABC)</span>
+<span class="cm"># idx=1: input=[B,C,D]  target=[C,D,E]</span>
+<span class="cm"># idx=2: input=[C,D,E]  target=[D,E,?]  (only 2 left, but drop_last handles this)</span>
+
+<span class="cm"># During training, for ONE sequence [A,B,C] with targets [B,C,D]:
+# The model is simultaneously trained on 3 tasks:
+#   - given [A],    predict B
+#   - given [A,B],  predict C
+#   - given [A,B,C], predict D
+# This is why transformers are so efficient — one forward pass = seq_len tasks!</span>
+
+tokens <span class="op">=</span> torch.<span class="fn">tensor</span>(ids)
+<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="fn">len</span>(ids) <span class="op">-</span> seq_len):
+    x <span class="op">=</span> tokens[i:i<span class="op">+</span>seq_len]
+    y <span class="op">=</span> tokens[i<span class="op">+</span><span class="nm">1</span>:i<span class="op">+</span>seq_len<span class="op">+</span><span class="nm">1</span>]
+    <span class="fn">print</span>(<span class="st">f"x={[chr(t) for t in x.tolist()]} → y={[chr(t) for t in y.tolist()]}"</span>)
+<span class="cm"># x=['A', 'B', 'C'] → y=['B', 'C', 'D']
+# x=['B', 'C', 'D'] → y=['C', 'D', 'E']</span></pre>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>What You Now Know</h2>
+    <ul class="checklist">
+      <li class="done">Tokenization converts text to integer sequences</li>
+      <li class="done">Byte-level tokenization: vocabulary size = 256, zero preprocessing</li>
+      <li class="done">Language modeling = next-token prediction at every position</li>
+      <li class="done">DataLoader handles batching, shuffling, and iteration</li>
+      <li class="done">Input and target are the same sequence shifted by 1</li>
+      <li>How do integers become continuous vectors? (Lesson 04 — Embeddings)</li>
+    </ul>
+  </div>
+
+  <a href="lesson-04.html" class="next-lesson">
+    <div>
+      <div class="next-label">Next Lesson</div>
+      <div class="next-title">Lesson 04 — Embeddings: Words as Vectors</div>
+    </div>
+    <div class="next-arrow">→</div>
+  </a>
+</div>
+</body>
+</html>
