@@ -285,12 +285,29 @@ loss2.<span class="fn">backward</span>()
   </div>
 
   <div class="section">
-    <h2>A Real Mini-Network: Manual Backprop for a 2-Layer MLP</h2>
-    <p>Now let's scale up. We'll implement forward and backward passes for a 2-layer network with a ReLU activation — the same pattern used inside every transformer's feed-forward block.</p>
+    <h2>A Real Mini-Network: The Matrix Dimension Trick</h2>
+    <p>Going from scalars (single numbers) to matrices (grids of numbers) is where 90% of people get stuck. But here is the secret "cheat code" used by neural network engineers: <strong>The shape of a gradient must exactly match the shape of its original tensor.</strong></p>
+    
+    <div class="concept">
+      <div class="concept-title">The Local Node Mental Model</div>
+      <p>Don't look at the whole network at once. Think of every operation (like a matrix multiply or a ReLU) as an isolated "Node" sitting in the graph. During the backward pass, a Node receives a gradient from above (<code>d_out</code>). Its only job is to calculate: <em>"How do I route this gradient to my inputs?"</em></p>
+    </div>
+
+    <p>Let's look at a 2-layer network with a ReLU activation. This is the exact mathematical structure inside every Transformer feed-forward block.</p>
 
     <div class="math-block">
-      <div class="eq">Forward: h = ReLU(W₁·x + b₁),  y = W₂·h + b₂,  loss = MSE(y, target)</div>
-      <div class="derivation">Backward (chain rule): ∂loss/∂W₂ = ∂loss/∂y · hᵀ  |  ∂loss/∂W₁ = (W₂ᵀ · ∂loss/∂y) · ReLU'(z₁) · xᵀ</div>
+      <div class="eq">Forward: h = ReLU(W₁·x + b₁),  y = W₂·h + b₂</div>
+      <div style="text-align: left; margin-top: 20px; border-top: 1px solid #1a3024; padding-top: 16px;">
+        <strong style="color:var(--accent2); font-size:11px; text-transform:uppercase; letter-spacing:0.1em;">Deriving the backward pass step-by-step:</strong>
+        <br><br>
+        <strong>1. The Linear Layer (y = W₂·h):</strong> How do we find <code>d_W2</code>?<br>
+        <span style="color:var(--muted); font-size:12px;">We know <code>W₂</code> has shape <em>(d_out, d_hidden)</em>. We receive <code>d_y</code> from above with shape <em>(d_out, 1)</em>. We have the input <code>h</code> with shape <em>(d_hidden, 1)</em>.<br>
+        How do we combine <em>(d_out, 1)</em> and <em>(d_hidden, 1)</em> to get <em>(d_out, d_hidden)</em>?<br>
+        <strong>Answer:</strong> The Outer Product! <code>d_y @ h.T</code></span>
+        <br><br>
+        <strong>2. The ReLU Valve (h = ReLU(z)):</strong> How do we find <code>d_z</code>?<br>
+        <span style="color:var(--muted); font-size:12px;">ReLU is a literal physical valve. If the forward pass <code>z</code> was > 0, the valve is OPEN (derivative is 1, gradient flows perfectly). If <code>z</code> was ≤ 0, the valve is CLOSED (derivative is 0, gradient is permanently destroyed).</span>
+      </div>
     </div>
 
     <div class="code-block">
@@ -305,48 +322,47 @@ torch.manual_seed(<span class="nm">42</span>)
 <span class="cm"># ── Network hyperparameters ───────────────────────────────────</span>
 d_in, d_hidden, d_out <span class="op">=</span> <span class="nm">4</span>, <span class="nm">8</span>, <span class="nm">2</span>
 
-<span class="cm"># Weights (no requires_grad — we'll do gradients manually)</span>
 W1 <span class="op">=</span> torch.<span class="fn">randn</span>(d_hidden, d_in)  <span class="op">*</span> <span class="nm">0.1</span>
 b1 <span class="op">=</span> torch.<span class="fn">zeros</span>(d_hidden)
 W2 <span class="op">=</span> torch.<span class="fn">randn</span>(d_out, d_hidden) <span class="op">*</span> <span class="nm">0.1</span>
 b2 <span class="op">=</span> torch.<span class="fn">zeros</span>(d_out)
 
-<span class="cm"># Fake input/target</span>
-x      <span class="op">=</span> torch.<span class="fn">randn</span>(d_in)         <span class="cm"># single input vector</span>
-target <span class="op">=</span> torch.<span class="fn">tensor</span>([<span class="nm">1.0</span>, <span class="nm">0.0</span>])  <span class="cm"># one-hot target</span>
+x      <span class="op">=</span> torch.<span class="fn">randn</span>(d_in)         
+target <span class="op">=</span> torch.<span class="fn">tensor</span>([<span class="nm">1.0</span>, <span class="nm">0.0</span>])
 
 <span class="cm"># ── FORWARD PASS ─────────────────────────────────────────────</span>
-z1 <span class="op">=</span> W1 <span class="op">@</span> x <span class="op">+</span> b1              <span class="cm"># pre-activation: (d_hidden,)</span>
-h  <span class="op">=</span> torch.<span class="fn">relu</span>(z1)            <span class="cm"># activation: (d_hidden,)</span>
-z2 <span class="op">=</span> W2 <span class="op">@</span> h <span class="op">+</span> b2              <span class="cm"># output: (d_out,)</span>
-loss <span class="op">=</span> ((z2 <span class="op">-</span> target) <span class="op">**</span> <span class="nm">2</span>).<span class="fn">mean</span>()  <span class="cm"># MSE</span>
+z1 <span class="op">=</span> W1 <span class="op">@</span> x <span class="op">+</span> b1              <span class="cm"># Shape: (8,)</span>
+h  <span class="op">=</span> torch.<span class="fn">relu</span>(z1)            <span class="cm"># Shape: (8,)</span>
+z2 <span class="op">=</span> W2 <span class="op">@</span> h <span class="op">+</span> b2              <span class="cm"># Shape: (2,)</span>
+loss <span class="op">=</span> ((z2 <span class="op">-</span> target) <span class="op">**</span> <span class="nm">2</span>).<span class="fn">mean</span>()
 
-<span class="cm"># ── BACKWARD PASS (manual chain rule) ────────────────────────</span>
-<span class="cm"># Start from the end, work backwards</span>
+<span class="cm"># ── BACKWARD PASS ────────────────────────────────────────────</span>
+<span class="cm"># 1. Gradient of MSE Loss: d_loss/d_z2</span>
+d_z2 <span class="op">=</span> <span class="nm">2.0</span> <span class="op">*</span> (z2 <span class="op">-</span> target) <span class="op">/</span> d_out  <span class="cm"># Shape: (2,)</span>
 
-<span class="cm"># 1. Gradient of MSE loss w.r.t. z2</span>
-d_z2 <span class="op">=</span> <span class="nm">2.0</span> <span class="op">*</span> (z2 <span class="op">-</span> target) <span class="op">/</span> d_out  <span class="cm"># (d_out,)</span>
+<span class="cm"># 2. Backprop through Layer 2 (y = W2 @ h + b2)</span>
+<span class="cm"># SHAPE MATCHING: d_W2 must be (2, 8). </span>
+<span class="cm"># d_z2 is (2,), h is (8,). Outer product gives us (2, 8)!</span>
+d_W2 <span class="op">=</span> torch.<span class="fn">outer</span>(d_z2, h)       
+d_b2 <span class="op">=</span> d_z2.clone()               
 
-<span class="cm"># 2. Gradient w.r.t. W2 and b2
-# z2 = W2 @ h + b2  →  dL/dW2 = dL/dz2 ⊗ h (outer product)</span>
-d_W2 <span class="op">=</span> torch.<span class="fn">outer</span>(d_z2, h)       <span class="cm"># (d_out, d_hidden)</span>
-d_b2 <span class="op">=</span> d_z2.clone()               <span class="cm"># (d_out,)</span>
+<span class="cm"># To continue backward, we need the gradient w.r.t the input 'h'</span>
+<span class="cm"># SHAPE MATCHING: d_h must be (8,). W2 is (2, 8), d_z2 is (2,).</span>
+<span class="cm"># W2.T @ d_z2 -> (8, 2) @ (2,) = (8,)</span>
+d_h  <span class="op">=</span> W2.T <span class="op">@</span> d_z2               
 
-<span class="cm"># 3. Gradient w.r.t. h (propagate through W2)
-# z2 = W2 @ h  →  dL/dh = W2ᵀ @ dL/dz2</span>
-d_h  <span class="op">=</span> W2.T <span class="op">@</span> d_z2               <span class="cm"># (d_hidden,)</span>
+<span class="cm"># 3. Backprop through ReLU (The Valve)</span>
+<span class="cm"># If z1 > 0, pass d_h backward. If z1 <= 0, multiply by 0.</span>
+d_z1 <span class="op">=</span> d_h <span class="op">*</span> (z1 <span class="op">&gt;</span> <span class="nm">0</span>).<span class="fn">float</span>()   
 
-<span class="cm"># 4. Gradient through ReLU
-# ReLU'(z) = 1 if z > 0, else 0  (the mask!)</span>
-d_z1 <span class="op">=</span> d_h <span class="op">*</span> (z1 <span class="op">&gt;</span> <span class="nm">0</span>).<span class="fn">float</span>()   <span class="cm"># zero out where z1 was ≤ 0</span>
+<span class="cm"># 4. Backprop through Layer 1</span>
+<span class="cm"># SHAPE MATCHING: d_W1 must be (8, 4). d_z1 is (8,), x is (4,)</span>
+d_W1 <span class="op">=</span> torch.<span class="fn">outer</span>(d_z1, x)       
+d_b1 <span class="op">=</span> d_z1.clone()               
 
-<span class="cm"># 5. Gradient w.r.t. W1 and b1</span>
-d_W1 <span class="op">=</span> torch.<span class="fn">outer</span>(d_z1, x)       <span class="cm"># (d_hidden, d_in)</span>
-d_b1 <span class="op">=</span> d_z1.clone()               <span class="cm"># (d_hidden,)</span>
-
-<span class="fn">print</span>(<span class="st">f"loss: {loss.item():.4f}"</span>)
-<span class="fn">print</span>(<span class="st">f"d_W1 shape: {d_W1.shape}"</span>)  <span class="cm"># (8, 4)</span>
-<span class="fn">print</span>(<span class="st">f"d_W2 shape: {d_W2.shape}"</span>)  <span class="cm"># (2, 8)</span>
+<span class="cm"># Check shapes to ensure sanity!</span>
+<span class="fn">print</span>(<span class="st">f"W1 shape: {W1.shape} == d_W1 shape: {d_W1.shape}"</span>)  <span class="cm"># (8, 4) == (8, 4)</span>
+<span class="fn">print</span>(<span class="st">f"W2 shape: {W2.shape} == d_W2 shape: {d_W2.shape}"</span>)  <span class="cm"># (2, 8) == (2, 8)</span>
 
 <span class="cm"># ── VERIFY WITH AUTOGRAD ──────────────────────────────────────</span>
 W1_ag <span class="op">=</span> W1.clone().requires_grad_(<span class="kw">True</span>)
@@ -363,6 +379,14 @@ loss_ag.<span class="fn">backward</span>()
 <span class="cm"># Check they match!</span>
 <span class="fn">print</span>(torch.<span class="fn">allclose</span>(d_W1, W1_ag.grad))  <span class="cm"># True ✓</span>
 <span class="fn">print</span>(torch.<span class="fn">allclose</span>(d_W2, W2_ag.grad))  <span class="cm"># True ✓</span></pre>
+    </div>
+
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-text">
+        <strong>Think of Gradients as "Tug of War" Forces.</strong> 
+        When we compute <code>d_loss__d_w = 12.0</code>, what does that actually mean? It means the loss function is "pulling" on the weight <code>w</code> with a force of +12.0. If we increase <code>w</code>, the loss goes UP. To train the network, we simply step in the <em>opposite</em> direction of the force (<code>w = w - 0.01 * 12.0</code>). Backpropagation is just computing these pulling forces for every single weight in the network simultaneously.
+      </div>
     </div>
   </div>
 
